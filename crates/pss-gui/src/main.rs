@@ -21,6 +21,8 @@ use pss_store::{BattleStore, BattleSummary, ShipIdentity, ShipWinRate};
 rust_i18n::i18n!("locales", fallback = "en");
 
 const CAPTURE_LISTEN: &str = "127.0.0.1:8484";
+/// Steam app id of Pixel Starships, written to `steam_appid.txt` for launches outside Steam.
+const STEAM_APP_ID: &str = "378760";
 const LOG_CAPACITY: usize = 1000;
 
 /// Shared semantic colors so every tab agrees on what a color means (mirrors docs/Ui: green =
@@ -844,17 +846,61 @@ struct GuiConfig {
     game_path: Option<PathBuf>,
 }
 
-/// Steam installs the game in a few well-known places on Linux; first existing one wins.
+/// Candidate install locations of the Steam build, per OS. Only the Linux ones are confirmed;
+/// the Windows/macOS file names are best guesses, hence `game_path` in the config as an override.
+fn game_path_candidates() -> Vec<PathBuf> {
+    const GAME_DIR: &str = "steamapps/common/Pixel Starships";
+    let mut out = Vec::new();
+
+    #[cfg(target_os = "linux")]
+    if let Some(home) = std::env::var_os("HOME").map(PathBuf::from) {
+        for steam in [
+            ".steam/debian-installation",
+            ".steam/steam",
+            ".local/share/Steam",
+        ] {
+            out.push(
+                home.join(steam)
+                    .join(GAME_DIR)
+                    .join("PixelStarships.x86_64"),
+            );
+        }
+    }
+
+    #[cfg(target_os = "windows")]
+    for var in ["ProgramFiles(x86)", "ProgramFiles"] {
+        if let Some(base) = std::env::var_os(var).map(PathBuf::from) {
+            out.push(base.join("Steam").join(GAME_DIR).join("PixelStarships.exe"));
+        }
+    }
+
+    #[cfg(target_os = "macos")]
+    if let Some(home) = std::env::var_os("HOME").map(PathBuf::from) {
+        out.push(
+            home.join("Library/Application Support/Steam")
+                .join(GAME_DIR)
+                .join("PixelStarships.app"),
+        );
+    }
+
+    out
+}
+
 fn detect_game_path() -> Option<PathBuf> {
-    let home = PathBuf::from(std::env::var_os("HOME")?);
-    [
-        ".steam/debian-installation/steamapps/common/Pixel Starships/PixelStarships.x86_64",
-        ".steam/steam/steamapps/common/Pixel Starships/PixelStarships.x86_64",
-        ".local/share/Steam/steamapps/common/Pixel Starships/PixelStarships.x86_64",
-    ]
-    .iter()
-    .map(|rel| home.join(rel))
-    .find(|p| p.exists())
+    game_path_candidates().into_iter().find(|p| p.exists())
+}
+
+/// A macOS `.app` is a folder: the runnable file is inside `Contents/MacOS`.
+fn resolve_game_executable(path: &std::path::Path) -> Option<PathBuf> {
+    if path.extension().is_some_and(|e| e == "app") {
+        let macos_dir = path.join("Contents/MacOS");
+        return std::fs::read_dir(macos_dir)
+            .ok()?
+            .flatten()
+            .map(|e| e.path())
+            .find(|p| p.is_file());
+    }
+    Some(path.to_path_buf())
 }
 
 fn default_lang() -> String {
@@ -1786,6 +1832,25 @@ impl PssGuiApp {
             self.log(tracing::Level::WARN, tr!("log.game_not_found"));
             return;
         };
+
+        let Some(path) = resolve_game_executable(&path) else {
+            self.log(tracing::Level::WARN, tr!("log.game_not_found"));
+            return;
+        };
+
+        // Launched outside Steam, the Steamworks SDK needs this file next to the executable to
+        // know which app it is; without it the game refuses to start.
+        if let Some(dir) = path.parent() {
+            let appid_file = dir.join("steam_appid.txt");
+            if !appid_file.exists()
+                && let Err(err) = std::fs::write(&appid_file, STEAM_APP_ID)
+            {
+                self.log(
+                    tracing::Level::WARN,
+                    tr!("log.appid_write_failed", err = err.to_string()),
+                );
+            }
+        }
 
         let proxy = format!("http://{CAPTURE_LISTEN}");
         let mut cmd = std::process::Command::new(&path);
