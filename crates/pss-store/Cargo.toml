@@ -1,0 +1,19 @@
+[package]
+name = "pss-store"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+rusqlite.workspace = true
+pss-model.workspace = true
+serde_json.workspace = true
+anyhow.workspace = true
+serde.workspace = true
+reqwest = { workspace = true, features = ["query"] }
+quick-xml = { version = "0.42.0", features = ["serialize"] }
+tokio = { version = "1.53.1", features = ["full"] }
+directories = "6.0.0"
+tracing = "0.1.44"
+
+[dev-dependencies]
+pss-codec.workspace = true

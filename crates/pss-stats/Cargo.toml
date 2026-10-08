@@ -1,0 +1,10 @@
+[package]
+name = "pss-stats"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+pss-model.workspace = true
+pss-designs.workspace = true
+pss-store.workspace = true
+anyhow.workspace = true

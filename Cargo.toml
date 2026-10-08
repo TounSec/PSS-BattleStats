@@ -1,6 +1,31 @@
-[package]
-name = "PSS-BattleStats"
+[workspace]
+resolver = "2"
+members = [
+  "crates/pss-capture",
+  "crates/pss-codec",
+  "crates/pss-model",
+  "crates/pss-designs",
+  "crates/pss-store",
+  "crates/pss-stats",
+  "crates/pss-cli",
+  "crates/pss-gui",
+]
+
+[workspace.package]
 version = "0.1.0"
 edition = "2024"
 
-[dependencies]
+[workspace.dependencies]
+pss-capture = { path = "crates/pss-capture" }
+pss-codec = { path = "crates/pss-codec" }
+pss-model = { path = "crates/pss-model" }
+pss-designs = { path = "crates/pss-designs" }
+pss-store = { path = "crates/pss-store" }
+pss-stats = { path = "crates/pss-stats" }
+
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+rusqlite = { version = "0.40.2", features = ["bundled"] }
+reqwest = { version = "0.13.5", features = ["json", "blocking"] }
+anyhow = "1.0.104"
+thiserror = "2.0.20"

@@ -1,0 +1,22 @@
+[package]
+name = "pss-cli"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "pss-battlestats-cli"
+path = "src/main.rs"
+
+[dependencies]
+
+pss-capture.workspace = true
+pss-codec.workspace = true
+pss-model.workspace = true
+pss-designs.workspace = true
+pss-store.workspace = true
+pss-stats.workspace = true
+clap = { version = "4.6.6", features = ["derive"] }
+anyhow.workspace = true
+tokio = { version = "1.53.1", features = ["full"] }
+serde_json.workspace = true
+reqwest.workspace = true

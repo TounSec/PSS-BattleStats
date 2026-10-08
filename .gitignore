@@ -1,3 +1,9 @@
 /target
 Cargo.lock
-/Research
+/docs
+pss-battlestats.db
+pss-capture-ca-key.pem
+pss-capture-ca.pem
+pss-crew-plan.json
+pss-designs-cache.db
+pss-gui-config.json
