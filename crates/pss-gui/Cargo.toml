@@ -16,12 +16,12 @@ pss-store.workspace = true
 pss-stats.workspace = true
 pss-capture.workspace = true
 pss-codec.workspace = true
+tokio.workspace = true
 eframe = "0.36.2"
 egui = "0.36.2"
-egui_extras = { version = "0.36.2", features = ["all_loaders"] }
+egui_extras = { version = "0.36.2", features = ["http", "image"] }
 rfd = "0.17"
 anyhow.workspace = true
-tokio = { version = "1.53.1", features = ["full"] }
 reqwest.workspace = true
 serde = { version = "1", features = ["derive"] }
 serde_json.workspace = true

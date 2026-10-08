@@ -9,6 +9,6 @@ serde.workspace = true
 serde_json.workspace = true
 rusqlite.workspace = true
 anyhow.workspace = true
-tokio = { version = "1.53.1", features = ["full"] }
+tokio.workspace = true
 quick-xml = { version = "0.42.0", features = ["serialize"] }
 regex = "1"
