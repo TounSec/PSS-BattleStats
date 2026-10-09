@@ -1,0 +1,74 @@
+name: Release
+
+# Builds the Windows MSI and attaches it to a GitHub Release when a version tag is pushed
+# (git tag -a v0.1.0 -m "Release 0.1.0" && git push origin v0.1.0).
+# Pre-release tags (v0.1.0-beta.1) are published as GitHub pre-releases.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write # needed to create the release and upload the MSI
+
+jobs:
+  msi:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check tag and derive the MSI version
+        id: version
+        shell: pwsh
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          if ($env:TAG -notmatch '^v(\d+\.\d+\.\d+)(-[0-9A-Za-z.-]+)?$') {
+            throw "Tag '$($env:TAG)' is not of the form vX.Y.Z or vX.Y.Z-suffix"
+          }
+          $full = $env:TAG.Substring(1)   # e.g. 0.1.0-beta.1
+          $core = $Matches[1]             # e.g. 0.1.0 (the MSI only accepts numeric X.Y.Z)
+
+          # The tag must match the workspace version, or the binary and the installer would
+          # disagree about which version they are (and the in-app update check would misfire).
+          $cargo = (Select-String -Path Cargo.toml -Pattern '^version = "(.*)"').Matches[0].Groups[1].Value
+          if ($cargo -ne $full) {
+            throw "Tag version '$full' does not match Cargo.toml version '$cargo'"
+          }
+
+          "full=$full" >> $env:GITHUB_OUTPUT
+          "core=$core" >> $env:GITHUB_OUTPUT
+          "prerelease=$($full.Contains('-').ToString().ToLower())" >> $env:GITHUB_OUTPUT
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build the GUI (dist profile)
+        run: cargo build --profile dist -p pss-gui --locked
+
+      - name: Install WiX
+        run: dotnet tool install --global wix --version 5.0.2
+
+      - name: Build the MSI
+        shell: pwsh
+        run: |
+          wix build installer/main.wxs `
+            -d Version=${{ steps.version.outputs.core }} `
+            -o PSS-BattleStats-${{ steps.version.outputs.full }}.msi
+
+      - name: Checksum
+        shell: pwsh
+        run: |
+          $msi = "PSS-BattleStats-${{ steps.version.outputs.full }}.msi"
+          $hash = (Get-FileHash $msi -Algorithm SHA256).Hash.ToLower()
+          "$hash  $msi" | Out-File -Encoding ascii "$msi.sha256"
+
+      - name: Publish the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            PSS-BattleStats-${{ steps.version.outputs.full }}.msi
+            PSS-BattleStats-${{ steps.version.outputs.full }}.msi.sha256
+          prerelease: ${{ steps.version.outputs.prerelease == 'true' }}
+          generate_release_notes: true
