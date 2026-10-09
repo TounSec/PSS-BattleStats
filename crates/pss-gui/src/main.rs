@@ -1,6 +1,8 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #[macro_use]
 mod i18n;
 mod crew;
+mod update;
 
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::PathBuf;
@@ -746,6 +748,14 @@ fn main() -> eframe::Result<()> {
 
 // ---------------------------------------------------------------- logging
 
+/// Outcome of the startup update check, shared with its background thread.
+#[derive(Debug, Clone)]
+enum UpdateCheck {
+    Pending,
+    Idle,
+    Available(update::UpdateInfo),
+}
+
 #[derive(Debug, Clone)]
 struct LogEntry {
     time: String,
@@ -844,6 +854,13 @@ struct GuiConfig {
     /// Game executable to launch (through the capture proxy) at startup. `None` = auto-detect
     #[serde(default)]
     game_path: Option<PathBuf>,
+    /// Ask GitHub for a newer release at startup. Opt-out: the app contacts a third party.
+    #[serde(default = "default_true")]
+    check_updates: bool,
+}
+
+fn default_true() -> bool {
+    true
 }
 
 /// Candidate install locations of the Steam build, per OS. Only the Linux ones are confirmed;
@@ -914,6 +931,7 @@ impl Default for GuiConfig {
             ca_key_path: None,
             lang: default_lang(),
             game_path: None,
+            check_updates: true,
         }
     }
 }
@@ -1388,6 +1406,9 @@ struct PssGuiApp {
     capture_handle: Option<CaptureHandle>,
     game_path: Option<PathBuf>,
     game_process: Option<std::process::Child>,
+    check_updates: bool,
+    update_check: Arc<Mutex<UpdateCheck>>,
+    update_dismissed: bool,
 
     ca_cert_path: PathBuf,
     ca_key_path: PathBuf,
@@ -1417,6 +1438,7 @@ impl PssGuiApp {
         let lang = i18n::normalize(&config.lang);
         i18n::set(lang);
         let game_path = config.game_path.clone().or_else(detect_game_path);
+        let check_updates = config.check_updates;
         let ca_cert_path = config
             .ca_cert_path
             .unwrap_or_else(|| app_paths().default_ca_cert());
@@ -1458,6 +1480,9 @@ impl PssGuiApp {
             capture_handle: None,
             game_path,
             game_process: None,
+            check_updates,
+            update_check: Arc::new(Mutex::new(UpdateCheck::Idle)),
+            update_dismissed: false,
             ca_cert_path,
             ca_key_path,
             ca_setup,
@@ -1469,6 +1494,9 @@ impl PssGuiApp {
 
         app.reload()?;
         app.log(tracing::Level::INFO, tr!("log.started"));
+        if app.check_updates {
+            app.start_update_check();
+        }
         if app.ca_setup == CaSetupState::Ready {
             // The proxy must be listening before the game starts, or its first requests bypass it.
             app.toggle_capture();
@@ -1769,6 +1797,7 @@ impl PssGuiApp {
                         ca_key_path: Some(key_path),
                         lang: self.lang.to_string(),
                         game_path: self.game_path.clone(),
+                        check_updates: self.check_updates,
                     }
                     .save();
                     self.ca_setup = CaSetupState::GeneratedInstructions;
@@ -1818,6 +1847,43 @@ impl PssGuiApp {
             tracing::Level::INFO,
             tr!("log.capture_started", addr = CAPTURE_LISTEN),
         );
+    }
+
+    /// Looks for a newer GitHub release on a background thread; the result lands in
+    /// `update_check` and the banner picks it up on a later frame.
+    fn start_update_check(&self) {
+        *self.update_check.lock().unwrap() = UpdateCheck::Pending;
+        let state = Arc::clone(&self.update_check);
+        let log_buffer = Arc::clone(&self.log_buffer);
+
+        std::thread::spawn(move || {
+            let result: Result<Option<update::UpdateInfo>> = (|| {
+                let rt = tokio::runtime::Runtime::new()?;
+                let http = reqwest::Client::new();
+                rt.block_on(update::check(&http))
+            })();
+
+            let next = match result {
+                Ok(Some(info)) => {
+                    push_log_entry(
+                        &log_buffer,
+                        tracing::Level::INFO,
+                        tr!("log.update_available", version = info.version.clone()),
+                    );
+                    UpdateCheck::Available(info)
+                }
+                Ok(None) => UpdateCheck::Idle,
+                Err(err) => {
+                    push_log_entry(
+                        &log_buffer,
+                        tracing::Level::WARN,
+                        tr!("log.update_check_failed", err = err.to_string()),
+                    );
+                    UpdateCheck::Idle
+                }
+            };
+            *state.lock().unwrap() = next;
+        });
     }
 
     /// Starts the game with its HTTP(S) traffic routed through the capture proxy.
@@ -2046,7 +2112,16 @@ impl eframe::App for PssGuiApp {
                 });
                 ui.menu_button(tr!("menu.battles"), |_ui| {});
                 ui.menu_button(tr!("menu.designs"), |_ui| {});
-                ui.menu_button(tr!("menu.help"), |_ui| {});
+                ui.menu_button(tr!("menu.help"), |ui| {
+                    if ui
+                        .checkbox(&mut self.check_updates, tr!("menu.check_updates"))
+                        .changed()
+                    {
+                        let mut config = GuiConfig::load();
+                        config.check_updates = self.check_updates;
+                        config.save();
+                    }
+                });
                 ui.menu_button(tr!("menu.language"), |ui| {
                     for (code, name) in i18n::LANGUAGES {
                         if ui.selectable_label(self.lang == code, name).clicked() {
@@ -2115,6 +2190,29 @@ impl eframe::App for PssGuiApp {
                 ui.selectable_value(&mut self.tab, Tab::Journal, tr!("tab.journal"));
             });
         });
+
+        let update_state = self.update_check.lock().unwrap().clone();
+        match update_state {
+            // eframe only repaints on input; poll so the banner shows up once the thread is done.
+            UpdateCheck::Pending => ui
+                .ctx()
+                .request_repaint_after(std::time::Duration::from_secs(1)),
+            UpdateCheck::Available(info) if !self.update_dismissed => {
+                egui::Panel::top("update_banner").show(ui, |ui| {
+                    ui.horizontal(|ui| {
+                        ui.colored_label(
+                            palette::INFO_BLUE,
+                            tr!("update.available", version = info.version.clone()),
+                        );
+                        ui.hyperlink_to(tr!("update.download"), &info.url);
+                        if ui.button(tr!("update.dismiss")).clicked() {
+                            self.update_dismissed = true;
+                        }
+                    });
+                });
+            }
+            _ => {}
+        }
 
         if self.tab == Tab::Combats {
             egui::Panel::left("battle_list")
