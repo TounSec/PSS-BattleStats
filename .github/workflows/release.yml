@@ -58,7 +58,7 @@ jobs:
           - { name: macos-arm64,   os: macos-latest,     target: aarch64-apple-darwin }
           - { name: macos-x64,     os: macos-latest,     target: x86_64-apple-darwin }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
@@ -98,7 +98,7 @@ jobs:
     needs: prepare
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
