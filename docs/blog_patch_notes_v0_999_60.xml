@@ -1,0 +1,804 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><item>
+		<title>Galaxy Patch Notes V0.999.60</title>
+		<link>https://blog.pixelstarships.com/2026/08/17/galaxy-patch-notes-v0-999-60/?utm_source=rss&#038;utm_medium=rss&#038;utm_campaign=galaxy-patch-notes-v0-999-60</link>
+		
+		<dc:creator><![CDATA[Toma]]></dc:creator>
+		<pubDate>Mon, 17 Aug 2026 01:35:29 +0000</pubDate>
+				<category><![CDATA[Balance Changes]]></category>
+		<category><![CDATA[Community]]></category>
+		<category><![CDATA[Games Updates]]></category>
+		<category><![CDATA[General]]></category>
+		<category><![CDATA[News]]></category>
+		<guid isPermaLink="false">https://blog.pixelstarships.com/?p=3634</guid>
+
+					<description><![CDATA[<p>Hi Captains! We hope you enjoyed this year&#8217;s End of Summer Splash! Today&#8217;s patch includes sweeping performance improvements for Pixel Starships, several Quality of Life changes, and long-requested Balance updates. New UGC Designs Today&#8217;s patch includes 9 Room Skins and 6 Ship Stickers designed by...</p>
+<p>The post <a href="https://blog.pixelstarships.com/2026/08/17/galaxy-patch-notes-v0-999-60/">Galaxy Patch Notes V0.999.60</a> first appeared on <a href="https://blog.pixelstarships.com">Pixel Starships</a>.</p>]]></description>
+										<content:encoded><![CDATA[<p>Hi Captains!</p>
+
+
+
+<p></p>
+
+
+
+<p></p>
+
+
+
+<p>We hope you enjoyed this year&#8217;s End of Summer Splash! Today&#8217;s patch includes sweeping performance improvements for Pixel Starships, several Quality of Life changes, and long-requested Balance updates.</p>
+
+
+
+<div style="height:26px" aria-hidden="true" class="wp-block-spacer"></div>
+
+
+
+<h4 class="wp-block-heading">New UGC Designs</h4>
+
+
+
+<div style="height:28px" aria-hidden="true" class="wp-block-spacer"></div>
+
+
+
+<p>Today&#8217;s patch includes 9 Room Skins and 6 Ship Stickers designed by players using the UGC submission tool:</p>
+
+
+
+<div style="height:15px" aria-hidden="true" class="wp-block-spacer"></div>
+
+
+
+<p>Congratulations to <strong>cheong昌 </strong>(Mechanical Bunny Girl), <strong>茜尔莎</strong> (Cat Ear Clinic), <strong>Vi852</strong> (Stinger Spammer), <strong>AnonimG </strong>(Ashen Rocketsurfer Phoenix), <strong>RamenX</strong> (Malevolent Shrine), <strong>Lavender Town</strong> (PBH Mass Teleporter), <strong>Llama Cultist</strong> (BBH &#8211; Big Bomb Hangar), <strong>Cremling Ω </strong>(FMS &#8211; Federation Missile Silo), <strong>YangLionSpirit</strong> (Defender Capacitor), <strong>yasusu </strong>(Miru Sticker), <strong>dot.com70</strong> (Certified Krill Issue Sticker), <strong>Sokudos </strong>(Hungry Sloth Sticker), <strong>MissileMike </strong>(Danger! Explosives! Sticker), <strong>Kafka </strong>(Archie&#8217;s Sticker), <strong>Zhwi </strong>(Ex-machina_Zhwi Sticker).</p>
+
+
+
+<div style="height:18px" aria-hidden="true" class="wp-block-spacer"></div>
+
+
+
+<div class="wp-block-columns is-layout-flex wp-container-core-columns-is-layout-9d6595d7 wp-block-columns-is-layout-flex">
+<div class="wp-block-column is-layout-flow wp-block-column-is-layout-flow" style="flex-basis:100%">
+<div class="wp-block-columns are-vertically-aligned-center is-layout-flex wp-container-core-columns-is-layout-9d6595d7 wp-block-columns-is-layout-flex">
+<div class="wp-block-column is-vertically-aligned-center is-layout-flow wp-block-column-is-layout-flow"><div class="wp-block-image is-resized">
+<figure class="aligncenter size-full"><img loading="lazy" decoding="async" width="224" height="129" src="https://blog.pixelstarships.com/wp-content/uploads/2026/08/Mechanical-Bunny-Girl.gif" alt="" class="wp-image-3640" style="width:auto;height:100px"/></figure></div></div>
+
+
+
+<div class="wp-block-column is-vertically-aligned-center is-layout-flow wp-block-column-is-layout-flow"><div class="wp-block-image is-resized">
+<figure class="aligncenter size-full"><img loading="lazy" decoding="async" width="130" height="130" src="https://blog.pixelstarships.com/wp-content/uploads/2026/08/Cat-Ear-Clinic.gif" alt="" class="wp-image-3641" style="width:auto;height:100px"/></figure></div></div>
+
+
+
+<div class="wp-block-column is-vertically-aligned-center is-layout-flow wp-block-column-is-layout-flow"><div class="wp-block-image is-resized">
+<figure class="aligncenter size-full"><img loading="lazy" decoding="async" width="313" height="125" src="https://blog.pixelstarships.com/wp-content/uploads/2026/08/Stinger-Spammer.gif" alt="" class="wp-image-3642" style="width:auto;height:100px"/></figure></div></div>
+</div>
+
+
+
+<p></p>
+
+
+
+<div class="wp-block-columns are-vertically-aligned-center is-layout-flex wp-container-core-columns-is-layout-9d6595d7 wp-block-columns-is-layout-flex">
+<div class="wp-block-column is-vertically-aligned-center is-layout-flow wp-block-column-is-layout-flow"><div class="wp-block-image is-resized">
+<figure class="aligncenter size-full"><img loading="lazy" decoding="async" width="246" height="143" src="https://blog.pixelstarships.com/wp-content/uploads/2026/08/Ashen-Rocketsurfer-Phoenix.gif" alt="" class="wp-image-3643" style="width:217px;height:auto"/></figure></div></div>
+
+
+
+<div class="wp-block-column is-vertically-aligned-center is-layout-flow wp-block-column-is-layout-flow"><div class="wp-block-image is-resized">
+<figure class="aligncenter size-full"><img loading="lazy" decoding="async" width="246" height="142" src="https://blog.pixelstarships.com/wp-content/uploads/2026/08/Malevolent-Shrine.gif" alt="" class="wp-image-3644" style="width:auto;height:100px"/></figure></div></div>
+
+
+
+<div class="wp-block-column is-vertically-aligned-center is-layout-flow wp-block-column-is-layout-flow"><div class="wp-block-image is-resized">
+<figure class="aligncenter size-full"><img loading="lazy" decoding="async" width="313" height="124" src="https://blog.pixelstarships.com/wp-content/uploads/2026/08/PBH-Mass-Teleporter.gif" alt="" class="wp-image-3645" style="width:auto;height:100px"/></figure></div></div>
+</div>
+
+
+
+<p></p>
+
+
+
+<div class="wp-block-columns are-vertically-aligned-center is-layout-flex wp-container-core-columns-is-layout-9d6595d7 wp-block-columns-is-layout-flex">
+<div class="wp-block-column is-vertically-aligned-center is-layout-flow wp-block-column-is-layout-flow"><div class="wp-block-image is-resized">
+<figure class="aligncenter size-full"><img loading="lazy" decoding="async" width="313" height="125" src="https://blog.pixelstarships.com/wp-content/uploads/2026/08/BBH-Big-Bomb-Hangar.gif" alt="" class="wp-image-3646" style="width:auto;height:100px"/></figure></div></div>
+
+
+
+<div class="wp-block-column is-vertically-aligned-center is-layout-flow wp-block-column-is-layout-flow"><div class="wp-block-image is-resized">
+<figure class="aligncenter size-full"><img loading="lazy" decoding="async" width="130" height="129" src="https://blog.pixelstarships.com/wp-content/uploads/2026/08/FMS-Federation-Missile-Silo.gif" alt="" class="wp-image-3647" style="width:auto;height:150px"/></figure></div></div>
+
+
+
+<div class="wp-block-column is-vertically-aligned-center is-layout-flow wp-block-column-is-layout-flow"><div class="wp-block-image is-resized">
+<figure class="aligncenter size-full"><img loading="lazy" decoding="async" width="74" height="149" src="https://blog.pixelstarships.com/wp-content/uploads/2026/08/Defender-Capacitor.gif" alt="" class="wp-image-3648" style="width:auto;height:100px"/></figure></div></div>
+</div>
+
+
+
+<p></p>
+
+
+
+<div class="wp-block-columns is-layout-flex wp-container-core-columns-is-layout-9d6595d7 wp-block-columns-is-layout-flex">
+<div class="wp-block-column is-vertically-aligned-top is-layout-flow wp-block-column-is-layout-flow"><div class="wp-block-image is-resized">
+<figure class="aligncenter size-full"><img loading="lazy" decoding="async" width="150" height="211" src="https://blog.pixelstarships.com/wp-content/uploads/2026/08/miru.png" alt="" class="wp-image-3650" style="width:139px;height:auto"/></figure></div></div>
+
+
+
+<div class="wp-block-column is-vertically-aligned-center is-layout-flow wp-block-column-is-layout-flow"><div class="wp-block-image is-resized">
+<figure class="aligncenter size-full"><img loading="lazy" decoding="async" width="500" height="500" src="https://blog.pixelstarships.com/wp-content/uploads/2026/08/Krill-Issue.png" alt="" class="wp-image-3651" style="width:246px;height:auto" srcset="https://blog.pixelstarships.com/wp-content/uploads/2026/08/Krill-Issue.png 500w, https://blog.pixelstarships.com/wp-content/uploads/2026/08/Krill-Issue-300x300.png 300w, https://blog.pixelstarships.com/wp-content/uploads/2026/08/Krill-Issue-150x150.png 150w" sizes="auto, (max-width: 500px) 100vw, 500px" /></figure></div></div>
+
+
+
+<div class="wp-block-column is-vertically-aligned-center is-layout-flow wp-block-column-is-layout-flow"><div class="wp-block-image is-resized">
+<figure class="aligncenter size-full"><img loading="lazy" decoding="async" width="256" height="250" src="https://blog.pixelstarships.com/wp-content/uploads/2026/08/Hungry-Sloth.png" alt="" class="wp-image-3652" style="width:172px;height:auto"/></figure></div></div>
+</div>
+
+
+
+<div class="wp-block-columns is-layout-flex wp-container-core-columns-is-layout-9d6595d7 wp-block-columns-is-layout-flex">
+<div class="wp-block-column is-vertically-aligned-center is-layout-flow wp-block-column-is-layout-flow"><div class="wp-block-image is-resized">
+<figure class="aligncenter size-full"><img loading="lazy" decoding="async" width="86" height="76" src="https://blog.pixelstarships.com/wp-content/uploads/2026/08/Danger-Explosives.png" alt="" class="wp-image-3653" style="width:94px;height:auto"/></figure></div></div>
+
+
+
+<div class="wp-block-column is-vertically-aligned-center is-layout-flow wp-block-column-is-layout-flow"><div class="wp-block-image is-resized">
+<figure class="aligncenter size-full"><img loading="lazy" decoding="async" width="550" height="554" src="https://blog.pixelstarships.com/wp-content/uploads/2026/08/Archies.png" alt="" class="wp-image-3654" style="aspect-ratio:1.0133333333333334;object-fit:cover;width:249px;height:auto" srcset="https://blog.pixelstarships.com/wp-content/uploads/2026/08/Archies.png 550w, https://blog.pixelstarships.com/wp-content/uploads/2026/08/Archies-298x300.png 298w, https://blog.pixelstarships.com/wp-content/uploads/2026/08/Archies-150x150.png 150w" sizes="auto, (max-width: 550px) 100vw, 550px" /></figure></div></div>
+
+
+
+<div class="wp-block-column is-vertically-aligned-center is-layout-flow wp-block-column-is-layout-flow"><div class="wp-block-image is-resized">
+<figure class="aligncenter size-full"><img loading="lazy" decoding="async" width="240" height="240" src="https://blog.pixelstarships.com/wp-content/uploads/2026/08/ex-machina_zhwi.png" alt="" class="wp-image-3655" style="width:170px;height:auto" srcset="https://blog.pixelstarships.com/wp-content/uploads/2026/08/ex-machina_zhwi.png 240w, https://blog.pixelstarships.com/wp-content/uploads/2026/08/ex-machina_zhwi-150x150.png 150w" sizes="auto, (max-width: 240px) 100vw, 240px" /></figure></div></div>
+</div>
+
+
+
+<p></p>
+
+
+
+<p></p>
+</div>
+</div>
+
+
+
+<p></p>
+
+
+
+<p>To Vote on future skins, or to<strong> submit your own design and earn Starbux every time the skin is purchased,</strong> please visit the official <a href="https://www.pixelstarships.com//UGC">UGC Design Page</a>.</p>
+
+
+
+<div style="height:26px" aria-hidden="true" class="wp-block-spacer"></div>
+
+
+
+<p>Please find the latest Patch Notes below. Additional Patch Notes for previous versions are also detailed below. This update is now available on all platforms.</p>
+
+
+
+<p>Please contact our&nbsp;<a href="mailto:mail@savysoda.com">Support Team</a>&nbsp;if you experience any problems updating the game.</p>
+
+
+
+<hr class="wp-block-separator has-css-opacity is-style-dots"/>
+
+
+
+<h5 class="wp-block-heading" id="block-b70f4aff-69bb-4af2-8236-f33125d388ae">V0.999.60 Changelogs:</h5>
+
+
+
+<p></p>
+
+
+
+<ul class="wp-block-list">
+<li>Google Play Sidekick now available on Android</li>
+
+
+
+<li>New Research Requirement: Room Reinforcement</li>
+
+
+
+<li>Wishlist feature added to Epic, Heroic, Scorched &amp; Special Crew Pods</li>
+
+
+
+<li>Reduced Research Times for all Crafts and Missiles</li>
+
+
+
+<li>Cloaked Crews now Decloak faster when in the same Room as Enemy Crew</li>
+
+
+
+<li>Cloaked Crews Movement Speed penalty removed</li>
+
+
+
+<li>Recall Beacon Cooldown increased from 1 to 2 sec</li>
+
+
+
+<li>Radar Room Detection reduced from 3 to 2 sec</li>
+
+
+
+<li>Engine Room Evasion Regeneration reduced from 5% to 4%</li>
+
+
+
+<li>Ship Thruster Room Evasion Regeneration reduced from 3.5% to 3%</li>
+
+
+
+<li>All Room Cooldowns now progress separately from Room Reload Times</li>
+
+
+
+<li>Teleport Repulsor Room Reload Time increased from 6 to 8 sec</li>
+
+
+
+<li>Mass Teleporter Room Reload Time increased from 15 to 16 sec</li>
+
+
+
+<li>Teleport Room Reload Time decreased from 5.5 to 5 sec, with 0.25 sec Cooldown Time</li>
+
+
+
+<li>Laser Blaster Room now has 1 sec Cooldown Time</li>
+
+
+
+<li>Ion Cannon Room Reload Time increased from 13.25 to 13.5 sec</li>
+
+
+
+<li>Ion Cannon Room Cooldown Time increased from 6 to 9.5 sec</li>
+
+
+
+<li>EMP Cannon Room Reload Time decreased from 7.5 to 6 sec, with 1 sec Cooldown Time</li>
+
+
+
+<li>Gamma Beam Emitter Room now categorized as a Cannon</li>
+
+
+
+<li>Gamma Beam Emitter Room Reload Time reduced from 7.5 to 6.5 sec, with 0.5 sec Cooldown Time</li>
+
+
+
+<li>Irradiator Room Reload Time decreased from 6.5 to 4.5 sec, with 1 sec Cooldown Time</li>
+
+
+
+<li>Irradiator Room now has a Volley of 3 and a Random AOE of 200</li>
+
+
+
+<li>Irradiator Room Crew Damage reduced from 3 to 2</li>
+
+
+
+<li>Coilgun Room Cooldown Time reduced from 1.5 to 1 sec</li>
+
+
+
+<li>Railgun Room Reload Time decreased from 10 to 7 sec, with 2 sec Cooldown Time</li>
+
+
+
+<li>Photon Disruptor Room Reload Time decreased from 4.5 to 3.5 sec, with 1 sec Cooldown Time</li>
+
+
+
+<li>Photon Disruptor Room Volley increased from 3 to 4</li>
+
+
+
+<li>Photon Disruptor Room Volley Delay increased from .2 to 0.25 sec</li>
+
+
+
+<li>Photon Phaser Room Reload Time increased from 2.5 to 3.5 sec</li>
+
+
+
+<li>Seeker Defense System Room Max Range increased from 4000 to 5000</li>
+
+
+
+<li>Missile Launcher Room now has 1 sec Cooldown Time</li>
+
+
+
+<li>Missile Pod Room Reload Time increased from 4.5 to 5 sec</li>
+
+
+
+<li>Missile Pod Room Cooldown Time increased from 0.5 to 1 sec</li>
+
+
+
+<li>Torpedo Launcher Room Cooldown Time increased from 1 to 3 sec</li>
+
+
+
+<li>Rocket Artillery Launcher Room Reload Time increased from 5.5 to 9 sec</li>
+
+
+
+<li>Javelin Barrage Tracking Damage reduced from 2 to 1.5</li>
+
+
+
+<li>Penetrator Barrage and Rocket Barrage Tracking Damage reduced from 1.5 to 1</li>
+
+
+
+<li>Tracker Barrage Tracking Damage reduced from 6 to 5</li>
+
+
+
+<li>Javelin, Penetrator, and Tracker Barrage ammo Reload Modifiers now match Single Shot versions</li>
+
+
+
+<li>Penetrator and Tracker Barrage Volley reduced from 6 to 5</li>
+
+
+
+<li>Javelin Barrage Volley reduced from 8 to 6</li>
+
+
+
+<li>AntiCraft Rooms now prioritize Decoy Crafts</li>
+
+
+
+<li>AntiCraft Rooms with &#8216;Random Unique&#8217; and &#8216;Random Once&#8217; Attacks follow Target Priority for all Volleys</li>
+
+
+
+<li>All Hangar Rooms now have a minimum 1 sec Cooldown Time</li>
+
+
+
+<li>Marauder Craft Cargo Space reduced from 3 to 2</li>
+
+
+
+<li>Herald Craft now have a Maximum Teleport Limit of 5</li>
+
+
+
+<li>Herald Craft gain a 0.5 sec Cooldown Time per 1 HP of Teleported Craft</li>
+
+
+
+<li>Herald Craft Reload Time reduced from 8 to 4 sec</li>
+
+
+
+<li>Herald Craft Reload Modifier increased from -60% to -50%</li>
+
+
+
+<li>Stinger Craft Reload Time reduced from 3 to 2.5 sec</li>
+
+
+
+<li>Queen Craft Reload Time reduced from 12.5 to 8 sec</li>
+
+
+
+<li>Queen Craft Reload Modifier increased from -40% to -25%</li>
+
+
+
+<li>Rook Craft HP increased from 18 to 20</li>
+
+
+
+<li>Pawn Craft Reload Time reduced from 10 to 6 sec</li>
+
+
+
+<li>Avenger Craft Reload Time reduced from 9.5 to 8 sec</li>
+
+
+
+<li>Missile Turret Drone Craft Reload Modifier increased from -25% to 0%</li>
+
+
+
+<li>Repair Drone Craft Volley increased to 10</li>
+
+
+
+<li>Repair Drone Craft Volley Delay increased to 8</li>
+
+
+
+<li>Repair Drone Craft Reload Time increased from 0.5 to 3 sec</li>
+</ul>
+
+
+
+<div style="height:20px" aria-hidden="true" class="wp-block-spacer"></div>
+
+
+
+<ul class="wp-block-list">
+<li>Improved Compression Ion Charge Ammo beam animation</li>
+
+
+
+<li>Item Sell Panel now uses period separators for Sale Values</li>
+
+
+
+<li>Skin Menu Panel split into Default and UGC Tabs</li>
+
+
+
+<li>Room Ammo Panel Reload Speed Modifier values updated for increased accuracy</li>
+
+
+
+<li>Added support for &#8216;Ammo Selected&#8217; AI Conditions</li>
+
+
+
+<li>Added support for &#8216;Set No Target&#8217; AI for AntiCraft Rooms</li>
+
+
+
+<li>Expanded Defensive Craft Count AI Conditions</li>
+
+
+
+<li>Expanded Missile Count AI Conditions</li>
+
+
+
+<li>Assassin Droid AI changed to &#8216;Enemy Room Has Enemy Crew &#8211; Target Condition Room&#8217;</li>
+</ul>
+
+
+
+<div style="height:20px" aria-hidden="true" class="wp-block-spacer"></div>
+
+
+
+<p></p>
+
+
+
+<ul class="wp-block-list">
+<li>Fixed a bug causing inaccurate Manual &#8216;drag and drop&#8217; Targeting on screen edge/different zoom levels</li>
+
+
+
+<li>Fixed a bug causing incorrect display of Recall Beacon Cooldown values</li>
+
+
+
+<li>Fixed a bug causing Ground Battle display inaccuracies when resizing the app window</li>
+
+
+
+<li>Fixed a bug causing Crafts to be permanently slowed if Tractor Beamed before their Attack Orbit</li>
+
+
+
+<li>Fixed a bug causing Herald Craft to be able to Warp ineligible Stinger Crafts</li>
+
+
+
+<li>Fixed a bug causing AntiCraft Rooms to continue Attacking destroyed Crafts</li>
+
+
+
+<li>Fixed a bug causing Abilities triggered by Crew AI to override Cloaked Crew checks</li>
+
+
+
+<li>Fixed a bug preventing delivery of Tapjoy Rewards</li>
+
+
+
+<li>Fixed a bug preventing Manual Commands from registering as queued</li>
+
+
+
+<li>Fixed a bug preventing display of Ad Ship Repairs for Subscribed users</li>
+
+
+
+<li>Fixed a bug preventing display of transition loading icon animation on launch</li>
+
+
+
+<li>Fixed a bug preventing display of King Craft buff effect</li>
+
+
+
+<li>Fixed a bug preventing AntiCraft Rooms from prioritizing Craft correctly based on Craft HP</li>
+
+
+
+<li>Fixed a bug preventing Fleet Wars Engagements from finalizing correctly</li>
+
+
+
+<li>Fixed a bug preventing Offerwall/Tapjoy rewards from being awarded correctly</li>
+</ul>
+
+
+
+<div style="height:35px" aria-hidden="true" class="wp-block-spacer"></div>
+
+
+
+<h5 class="wp-block-heading" id="block-b70f4aff-69bb-4af2-8236-f33125d388ae">V0.999.58 Changelogs:</h5>
+
+
+
+<p></p>
+
+
+
+<ul class="wp-block-list">
+<li>Crew RST Stat now also reduces Poison Duration</li>
+
+
+
+<li>Shield Generator Reload Time decreased from 8 to 7 sec</li>
+
+
+
+<li>Bolter Reload Time increased from 1 to 2 sec</li>
+
+
+
+<li>Gamma Beam Emitter Room Crew Damage increased from 5 to 6.5</li>
+
+
+
+<li>Irradiator Room Crew Damage increased from 2 to 3</li>
+
+
+
+<li>Large Engines Evasion Regeneration from 0.3% to 0.5%</li>
+
+
+
+<li>Engines Evasion Capacity increased from 25% to 30%</li>
+
+
+
+<li>Ship Thrusters Evasion Capacity increased from 15% to 20%</li>
+
+
+
+<li>Fusion Drive Engine Room no longer increases Max Evasion</li>
+
+
+
+<li>Fusion Drive Engine Room now grants 1% Evasion Regen every 0.5 sec</li>
+
+
+
+<li>Security Gate Rooms now Detect and Damage Cloaked Crews</li>
+
+
+
+<li>Assassin Droid HP increased from 10 to 12</li>
+
+
+
+<li>Breaker Missiles Damage Taken by Target Room reduced from 25% to 20%</li>
+
+
+
+<li>Jungler Missiles Crew Damage increased from 5 to 6</li>
+
+
+
+<li>Jungler Missiles now only apply Poison to Crews/Droids</li>
+
+
+
+<li>Craft Attack Speed is now reduced by 50% when not in Attack Orbit</li>
+
+
+
+<li>Craft Attack Range is now reduced by 50% when not in Attack Orbit</li>
+
+
+
+<li>All Crafts now reset Attack Reload Time on Teleport</li>
+
+
+
+<li>Warp Hangar Room now has a 1 sec Cooldown Time</li>
+
+
+
+<li>Tactical Hangars now Launch Skirmisher Craft instead of Striker Craft</li>
+
+
+
+<li>Skirmisher and Knight Craft Missiles now have 2.5 Tracking Damage</li>
+
+
+
+<li>Skirmisher Craft changed from Laser Attacks to Missile Attacks</li>
+
+
+
+<li>Bulwark Craft changed from Laser Attacks to Missile Attacks</li>
+
+
+
+<li>Bulwark Craft System/Crew/Craft/Tracking Damage increased from 0.1 to 0.3</li>
+
+
+
+<li>Bulwark Craft Volley reduced from 8 to 6</li>
+
+
+
+<li>Bulwark Craft Reload Speed increased from 7 to 10 sec</li>
+
+
+
+<li>Interceptor Craft Reload Time increased from 3.5 to 4.5 sec</li>
+
+
+
+<li>Herald Craft can no longer Teleport other Herald Craft</li>
+
+
+
+<li>Herald Craft Reload Time increased from 5 to 8 sec</li>
+
+
+
+<li>Herald Craft Rebuild Speed Modifier reduced from -40% to -60%</li>
+
+
+
+<li>Savior Craft Rebuild Speed modifier increased from -40% to -25%</li>
+
+
+
+<li>Scout Fighter Craft Flight Speed reduced from 9 to 8</li>
+
+
+
+<li>Stinger Craft Flight Speed reduced from 10 to 8</li>
+</ul>
+
+
+
+<div style="height:20px" aria-hidden="true" class="wp-block-spacer"></div>
+
+
+
+<ul class="wp-block-list">
+<li>Updated Help Menu Info entries</li>
+
+
+
+<li>Ctrl-Backspace in Chat now deletes the last word only</li>
+
+
+
+<li>Added support for &#8216;Status Effect&#8217; AI Conditions</li>
+
+
+
+<li>Medical Droid AI changed to only &#8216;Use Special Ability when &lt;= 75% HP&#8217;</li>
+</ul>
+
+
+
+<div style="height:20px" aria-hidden="true" class="wp-block-spacer"></div>
+
+
+
+<ul class="wp-block-list">
+<li>Fixed a bug causing Ad Blimps to be pressable multiple times</li>
+
+
+
+<li>Fixed a bug causing Cloaked Crews to break Cloak when Teleporting</li>
+
+
+
+<li>Fixed a bug causing incorrect Crew Counter values after Donated Crews return</li>
+
+
+
+<li>Fixed a bug causing Room AI to be removed when editing Modules</li>
+
+
+
+<li>Fixed a bug preventing Craft functions when Target Room has EMP</li>
+
+
+
+<li>Fixed a bug preventing display of Crew Headgear Equipment</li>
+
+
+
+<li>Fixed a bug preventing Crafts with no assigned Target from Teleporting to Heralds</li>
+
+
+
+<li>Fixed a bug preventing Chat from sending a Message when pressing Enter</li>
+
+
+
+<li>Fixed a bug preventing display of Poison and Break Status Effects on Rooms</li>
+</ul>
+
+
+
+<div style="height:20px" aria-hidden="true" class="wp-block-spacer"></div>
+
+
+
+<hr class="wp-block-separator has-css-opacity is-style-dots"/>
+
+
+
+<div style="height:24px" aria-hidden="true" class="wp-block-spacer"></div>
+
+
+
+<p id="block-65bb1e01-8070-4549-9806-f1bb20edb543">Thank you for all of your feedback, which has led to many of the changes noted above. You can join these discussions in the Feedback section of our <a href="https://discord.gg/pss">Official PSS Discord</a>&nbsp;and on our&nbsp;<a href="https://www.reddit.com/r/PixelStarships/">subreddit</a>.</p>
+
+
+
+<div style="height:15px" aria-hidden="true" class="wp-block-spacer"></div>
+
+
+
+<p id="block-53306880-bd65-419e-9530-54794a6c73a3">Good Hunting, Captains!</p>
+
+
+
+<div style="height:15px" aria-hidden="true" class="wp-block-spacer"></div>
+
+
+
+<p id="block-ce5dc30a-c490-44ea-8644-e0975bb36ec4"><em><br>-SavySoda Team</em></p>
+
+
+
+<p></p>
+
+
+<div class="wp-block-image">
+<figure class="aligncenter" id="block-d776d549-5c12-4c0c-ba0a-439bf7bd444f"><img decoding="async" src="http://blog.pixelstarships.com/wp-content/uploads/2021/04/QtaIndustrialCity_Footer-1-1024x228.png" alt="This image has an empty alt attribute; its file name is QtaIndustrialCity_Footer-1-1024x228.png"/></figure></div>
+
+
+<p></p><p>The post <a href="https://blog.pixelstarships.com/2026/08/17/galaxy-patch-notes-v0-999-60/">Galaxy Patch Notes V0.999.60</a> first appeared on <a href="https://blog.pixelstarships.com">Pixel Starships</a>.</p>]]></content:encoded>
+					
+		
+		
+			</item></channel></rss>
