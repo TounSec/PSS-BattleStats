@@ -16,7 +16,7 @@ jobs:
       core: ${{ steps.v.outputs.core }}
       prerelease: ${{ steps.v.outputs.prerelease }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Check tag against Cargo.toml and derive versions
         id: v
         env:
