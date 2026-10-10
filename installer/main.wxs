@@ -1,19 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <!--
   WiX v4+ source for the PSS-BattleStats installer (untested on Windows yet).
 
   Build (Windows):
-    cargo build --profile dist
+    cargo build, with the "dist" profile (profile flag omitted here: XML comments cannot contain two dashes)
     wix build installer/main.wxs -d Version=<X.Y.Z> -o PSS-BattleStats-<version>.msi
   (CI does this on a version tag, see .github/workflows/release.yml.)
 
   Rules:
-  - UpgradeCode must NEVER change: it is how a newer MSI finds and replaces the installed one.
-  - Version is passed with `-d Version=X.Y.Z` (numeric core of the workspace Cargo.toml version).
+  * UpgradeCode must NEVER change: it is how a newer MSI finds and replaces the installed one.
+  * Version is passed with `-d Version=X.Y.Z` (numeric core of the workspace Cargo.toml version).
     Windows Installer ignores the 4th field when comparing, and does not accept "-beta.1".
-  - User data lives in %APPDATA% / %LOCALAPPDATA% (see pss-store paths), so upgrades and
+  * User data lives in %APPDATA% / %LOCALAPPDATA% (see pss-store paths), so upgrades and
     uninstalls never touch it. No CA certificate is bundled: each user generates their own.
 -->
+
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
   <Package Name="PSS-BattleStats"
            Manufacturer="TounSec"

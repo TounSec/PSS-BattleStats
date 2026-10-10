@@ -1,2 +1,5 @@
 /target
 /docs
+/installer/
+PSS-BattleStats.wixpdb
+PSS-BattleStats.msi
