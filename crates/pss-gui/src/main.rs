@@ -863,8 +863,8 @@ fn default_true() -> bool {
     true
 }
 
-/// Candidate install locations of the Steam build, per OS. Only the Linux ones are confirmed;
-/// the Windows/macOS file names are best guesses, hence `game_path` in the config as an override.
+/// Candidate Steam install folders of the game, per OS. The executable inside is resolved
+/// separately (`resolve_game_executable`), so its exact file name never has to be guessed.
 fn game_path_candidates() -> Vec<PathBuf> {
     const GAME_DIR: &str = "steamapps/common/Pixel Starships";
     let mut out = Vec::new();
@@ -876,27 +876,32 @@ fn game_path_candidates() -> Vec<PathBuf> {
             ".steam/steam",
             ".local/share/Steam",
         ] {
-            out.push(
-                home.join(steam)
-                    .join(GAME_DIR)
-                    .join("PixelStarships.x86_64"),
-            );
+            out.push(home.join(steam).join(GAME_DIR));
         }
     }
 
     #[cfg(target_os = "windows")]
-    for var in ["ProgramFiles(x86)", "ProgramFiles"] {
-        if let Some(base) = std::env::var_os(var).map(PathBuf::from) {
-            out.push(base.join("Steam").join(GAME_DIR).join("PixelStarships.exe"));
+    {
+        // Steam's default folder, then the usual extra library folders on each drive letter.
+        let mut roots: Vec<PathBuf> = Vec::new();
+        for var in ["ProgramFiles(x86)", "ProgramFiles"] {
+            if let Some(base) = std::env::var_os(var).map(PathBuf::from) {
+                roots.push(base.join("Steam"));
+            }
         }
+        for letter in 'C'..='Z' {
+            roots.push(PathBuf::from(format!("{letter}:\\SteamLibrary")));
+            roots.push(PathBuf::from(format!("{letter}:\\Steam")));
+        }
+
+        out.extend(roots.into_iter().map(|root| root.join(GAME_DIR)));
     }
 
     #[cfg(target_os = "macos")]
     if let Some(home) = std::env::var_os("HOME").map(PathBuf::from) {
         out.push(
             home.join("Library/Application Support/Steam")
-                .join(GAME_DIR)
-                .join("PixelStarships.app"),
+                .join(GAME_DIR),
         );
     }
 
@@ -907,17 +912,65 @@ fn detect_game_path() -> Option<PathBuf> {
     game_path_candidates().into_iter().find(|p| p.exists())
 }
 
-/// A macOS `.app` is a folder: the runnable file is inside `Contents/MacOS`.
+/// True when `stem` is the game's own file name, ignoring case and separators: "pixelstarships",
+/// "Pixel Starships" and "pixel_starships" all match.
+fn is_game_name(stem: &str) -> bool {
+    stem.to_ascii_lowercase().replace([' ', '_', '-'], "") == "pixelstarships"
+}
+
+/// Looks in the root of the game folder for the main executable (never recursing): the game's own
+/// name first, then any other executable that isn't a crash reporter or an uninstaller.
+fn find_game_executable(dir: &std::path::Path) -> Option<PathBuf> {
+    let files: Vec<PathBuf> = std::fs::read_dir(dir)
+        .ok()?
+        .flatten()
+        .map(|e| e.path())
+        .collect();
+
+    // `.exe` on Windows, `x86_64` on Linux, `.app` bundles on macOS.
+    let is_runnable = |p: &PathBuf| {
+        p.extension()
+            .and_then(|e| e.to_str())
+            .map(str::to_ascii_lowercase)
+            .is_some_and(|e| matches!(e.as_str(), "exe" | "x86_64" | "app"))
+    };
+    let stem_of = |p: &PathBuf| {
+        p.file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or_default()
+            .to_ascii_lowercase()
+    };
+
+    files
+        .iter()
+        .find(|p| is_runnable(p) && is_game_name(&stem_of(p)))
+        .or_else(|| {
+            files.iter().find(|p| {
+                let s = stem_of(p);
+                is_runnable(p) && !s.starts_with("unitycrashhandler") && !s.starts_with("unins")
+            })
+        })
+        .cloned()
+}
+
+/// Turns what `game_path` points to into something runnable: a game folder resolves to its main
+/// executable and a macOS `.app` bundle (a folder) to be binary inside `Contents/MacOS`.
 fn resolve_game_executable(path: &std::path::Path) -> Option<PathBuf> {
+    let path = if path.is_dir() && path.extension().is_none_or(|e| e != "app") {
+        find_game_executable(path)?
+    } else {
+        path.to_path_buf()
+    };
+
     if path.extension().is_some_and(|e| e == "app") {
-        let macos_dir = path.join("Contents/MacOS");
-        return std::fs::read_dir(macos_dir)
+        return std::fs::read_dir(path.join("Contents/MacOS"))
             .ok()?
             .flatten()
             .map(|e| e.path())
             .find(|p| p.is_file());
     }
-    Some(path.to_path_buf())
+
+    Some(path)
 }
 
 fn default_lang() -> String {
