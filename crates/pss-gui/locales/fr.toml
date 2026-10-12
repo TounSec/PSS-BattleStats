@@ -39,7 +39,7 @@ destroyed = "Détruit"
 [ca]
 last_step = "Dernière étape, à faire une seule fois : ton système doit approuver ce certificat pour que la capture fonctionne."
 intro = "PSS-BattleStats a besoin d'un certificat de sécurité local pour lire le trafic réseau du jeu (comme le fait un antivirus). Ce certificat est généré uniquement sur ta machine et n'est jamais envoyé nulle part."
-windows = "Windows : double-clique sur le fichier .pem, choisis \"Installer le certificat\" → \"Ordinateur local\" → \"Autorités de certification racines de confiance\"."
+windows = "Windows : double-clique sur le fichier .crt, choisis \"Installer le certificat\" → \"Ordinateur local\" → \"Autorités de certification racines de confiance\"."
 macos = "macOS : double-clique sur le fichier .pem pour l'ouvrir dans Trousseau d'accès, puis marque-le comme \"Toujours approuver\"."
 linux = "Linux : copie le fichier dans /usr/local/share/ca-certificates/ (en .crt) puis lance `sudo update-ca-certificates` dans un terminal."
 title = "Configuration requise"

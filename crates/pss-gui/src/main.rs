@@ -1770,10 +1770,15 @@ impl PssGuiApp {
     /// Opens a native "save file" dialog for the cert location, derives the key's path next to
     /// it, generates a fresh CA, writes both files, and remembers the choice for next launch.
     fn generate_ca_interactive(&mut self) {
+        let default_name = app_paths()
+            .default_ca_cert()
+            .file_name()
+            .map(|n| n.to_string_lossy().into_owned())
+            .unwrap_or_else(|| "pss-capture-ca.pem".to_string());
         let dialog = rfd::FileDialog::new()
-            .set_file_name("pss-capture-ca.pem")
+            .set_file_name(default_name)
             .set_directory(app_paths().ca_dir())
-            .add_filter(tr!("ca.pem_filter"), &["pem"]);
+            .add_filter(tr!("ca.pem_filter"), &["pem", "crt", "cer"]);
 
         let Some(cert_path) = dialog.save_file() else {
             return; // user cancelled - stay on the "needs setup" screen

@@ -22,6 +22,9 @@ const BATTLES_DB: &str = "pss-battlestats.db";
 const DESIGNS_DB: &str = "pss-designs-cache.db";
 const CONFIG_FILE: &str = "pss-gui-config.json";
 const CREW_PLAN: &str = "pss-crew-plan.json";
+#[cfg(windows)]
+const CA_CERT: &str = "pss-capture-ca.crt";
+#[cfg(not(windows))]
 const CA_CERT: &str = "pss-capture-ca.pem";
 const CA_KEY: &str = "pss-capture-ca-key.pem";
 
@@ -159,10 +162,7 @@ mod tests {
         assert_eq!(p.designs_db(), root.join("pss-designs-cache.db"));
         assert_eq!(p.config_file(), root.join("pss-gui-config.json"));
         assert_eq!(p.crew_plan(), root.join("pss-crew-plan.json"));
-        assert_eq!(
-            p.default_ca_cert(),
-            root.join("ca").join("pss-capture-ca.pem")
-        );
+        assert_eq!(p.default_ca_cert(), root.join("ca").join(CA_CERT));
         assert_eq!(
             p.default_ca_key(),
             root.join("ca").join("pss-capture-ca-key.pem")
