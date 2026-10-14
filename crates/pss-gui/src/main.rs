@@ -756,6 +756,15 @@ enum UpdateCheck {
     Available(update::UpdateInfo),
 }
 
+/// Progress of downloading the update's MSI, shared with its background thread
+#[derive(Debug, Clone)]
+enum InstallState {
+    Idle,
+    Downloading,
+    Failed(String),
+    Ready(PathBuf),
+}
+
 #[derive(Debug, Clone)]
 struct LogEntry {
     time: String,
@@ -1462,6 +1471,7 @@ struct PssGuiApp {
     check_updates: bool,
     update_check: Arc<Mutex<UpdateCheck>>,
     update_dismissed: bool,
+    update_install: Arc<Mutex<InstallState>>,
 
     ca_cert_path: PathBuf,
     ca_key_path: PathBuf,
@@ -1536,6 +1546,7 @@ impl PssGuiApp {
             check_updates,
             update_check: Arc::new(Mutex::new(UpdateCheck::Idle)),
             update_dismissed: false,
+            update_install: Arc::new(Mutex::new(InstallState::Idle)),
             ca_cert_path,
             ca_key_path,
             ca_setup,
@@ -1944,6 +1955,34 @@ impl PssGuiApp {
         });
     }
 
+    /// Downloads and verifies the update's MSI on a background thread; once `Ready`, the next
+    /// frame starts the installer and closes the app
+    fn start_update_install(&self, asset: update::InstallerAsset) {
+        *self.update_install.lock().unwrap() = InstallState::Downloading;
+        let state = Arc::clone(&self.update_install);
+        let log_buffer = Arc::clone(&self.log_buffer);
+
+        std::thread::spawn(move || {
+            let result: Result<PathBuf> = (|| {
+                let rt = tokio::runtime::Runtime::new()?;
+                let http = reqwest::Client::new();
+                rt.block_on(update::download_installer(&http, &asset))
+            })();
+
+            *state.lock().unwrap() = match result {
+                Ok(path) => InstallState::Ready(path),
+                Err(err) => {
+                    push_log_entry(
+                        &log_buffer,
+                        tracing::Level::WARN,
+                        tr!("log.update_install_failed", err = err.to_string()),
+                    );
+                    InstallState::Failed(err.to_string())
+                }
+            };
+        });
+    }
+
     /// Starts the game with its HTTP(S) traffic routed through the capture proxy.
     fn launch_game(&mut self) {
         if let Some(child) = self.game_process.as_mut() {
@@ -2249,9 +2288,29 @@ impl eframe::App for PssGuiApp {
             });
         });
 
+        // The MSI finished downloading: hand over to the Windows Installer and close the app so it
+        // can replace the running executable
+        let install_state = self.update_install.lock().unwrap().clone();
+        if let InstallState::Ready(path) = &install_state {
+            match update::launch_installer(path) {
+                Ok(()) => {
+                    *self.update_install.lock().unwrap() = InstallState::Idle;
+                    ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
+                }
+                Err(err) => {
+                    self.log(
+                        tracing::Level::WARN,
+                        tr!("log.update_install_failed", err = err.to_string()),
+                    );
+                    *self.update_install.lock().unwrap() = InstallState::Failed(err.to_string());
+                }
+            }
+        }
+
         let update_state = self.update_check.lock().unwrap().clone();
+        let mut install_clicked: Option<update::InstallerAsset> = None;
         match update_state {
-            // eframe only repaints on input; poll so the banner shows up once the thread is done.
+            // eframe only repaints on input; poll so the banner shows up once the thread is done
             UpdateCheck::Pending => ui
                 .ctx()
                 .request_repaint_after(std::time::Duration::from_secs(1)),
@@ -2263,6 +2322,29 @@ impl eframe::App for PssGuiApp {
                             tr!("update.available", version = info.version.clone()),
                         );
                         ui.hyperlink_to(tr!("update.download"), &info.url);
+
+                        match &install_state {
+                            InstallState::Downloading => {
+                                ui.label(tr!("update.downloading"));
+                                ui.ctx()
+                                    .request_repaint_after(std::time::Duration::from_millis(500));
+                            }
+                            other => {
+                                // One-click install is Windows-only (it runs an MSI)
+                                if let (true, Some(asset)) = (cfg!(windows), &info.installer)
+                                    && ui.button(tr!("update.install")).clicked()
+                                {
+                                    install_clicked = Some(asset.clone());
+                                }
+                                if let InstallState::Failed(err) = other {
+                                    ui.colored_label(
+                                        palette::BAD,
+                                        tr!("update.failed", err = err.clone()),
+                                    );
+                                }
+                            }
+                        }
+
                         if ui.button(tr!("update.dismiss")).clicked() {
                             self.update_dismissed = true;
                         }
@@ -2270,6 +2352,10 @@ impl eframe::App for PssGuiApp {
                 });
             }
             _ => {}
+        }
+
+        if let Some(asset) = install_clicked {
+            self.start_update_install(asset);
         }
 
         if self.tab == Tab::Combats {
