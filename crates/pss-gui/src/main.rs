@@ -2037,6 +2037,20 @@ impl PssGuiApp {
         }
     }
 
+    /// Stops the game we launched, if it is still running. A game started by the user outside of
+    /// ththis app is never touched, since we only hold the `Child` we spawned
+    fn stop_game(&mut self) {
+        let Some(mut child) = self.game_process.take() else {
+            return;
+        };
+
+        // `try_wait` is `Ok(None)` while the process is alive
+        if matches!(child.try_wait(), Ok(None)) {
+            let _ = child.kill();
+            let _ = child.wait(); // reap it so it doesn't linger as a zombie
+        }
+    }
+
     /// Resolves trophies/alliance for any ship identity `pss-capture` has already seen via
     /// `CreateBattle` but never profiled (`UserService/SearchUsers`, public, no access token).
     /// Blocking/synchronous - a handful of quick HTTP GETs, not worth a background thread and
@@ -2141,6 +2155,12 @@ impl PssGuiApp {
                 tr!("log.export_failed", err = err.to_string()),
             ),
         }
+    }
+}
+
+impl Drop for PssGuiApp {
+    fn drop(&mut self) {
+        self.stop_game();
     }
 }
 
