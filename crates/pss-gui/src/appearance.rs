@@ -79,7 +79,7 @@ impl Appearance {
         ctx.set_theme(self.mode.preference());
 
         let fonts_key = (self.font.clone(), self.mono_font.clone());
-        let fonts_id = egui::Id::new("appearance_fonts_key");
+        let fonts_id = egui::Id::unique("appearance_fonts_key");
         let last: Option<(Option<PathBuf>, Option<PathBuf>)> = ctx.data(|d| d.get_temp(fonts_id));
 
         if last.as_ref() != Some(&fonts_key) {

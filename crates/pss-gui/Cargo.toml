@@ -17,9 +17,9 @@ pss-stats.workspace = true
 pss-capture.workspace = true
 pss-codec.workspace = true
 tokio.workspace = true
-eframe = "0.36.2"
-egui = "0.36.2"
-egui_extras = { version = "0.36.2", features = ["http", "image"] }
+eframe = "0.37.0"
+egui = "0.37"
+egui_extras = { version = "0.37.0", features = ["http", "image", "gif"] }
 rfd = "0.17"
 anyhow.workspace = true
 reqwest.workspace = true

@@ -2972,7 +2972,7 @@ fn render_patch_note_detail(
             .strong(),
         );
         ui.add_space(4.0);
-        let enlarge_id = egui::Id::new("patch_notes_enlarged_ugc");
+        let enlarge_id = egui::Id::unique("patch_notes_enlarged_ugc");
         egui::ScrollArea::horizontal()
             .id_salt("patch_notes_ugc_scroll")
             .show(ui, |ui| {
