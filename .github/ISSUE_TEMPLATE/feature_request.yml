@@ -1,0 +1,39 @@
+name: Feature request
+description: Suggest an idea for this project
+title: "[Feature] "
+type: Feature
+labels: ["enhancement"]
+assignees: ["TounSec"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the situation, not the solution. "I can't see X" is better than "add a button Y".
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Describe the solution you'd like
+      description: What you want to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: area
+    attributes:
+      label: Which part would it affect?
+      multiple: true
+      options:
+        - Battles / History
+        - Crew
+        - Designs / Patch notes
+        - Statistics
+        - Capture / game launch
+        - Appearance language
+        - Other
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Mockups, screenshots, links to similar tools.
