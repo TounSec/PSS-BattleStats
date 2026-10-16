@@ -1,7 +1,9 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #[macro_use]
 mod i18n;
+mod appearance;
 mod crew;
+mod filter;
 mod update;
 
 use std::collections::{HashMap, HashSet, VecDeque};
@@ -32,7 +34,9 @@ const LOG_CAPACITY: usize = 1000;
 /// pss-designs-sourced data, grey = neutral/no data). Kept in one place after the GUI shipped with
 /// several near-duplicate colors picked ad hoc per call site, some of which didn't actually match
 /// the mockups (e.g. "calibré" was green instead of the mockup's orange).
-mod palette {
+pub mod palette {
+    use std::sync::atomic::{AtomicU32, Ordering::Relaxed};
+
     use eframe::egui::Color32;
 
     pub const GOOD: Color32 = Color32::from_rgb(72, 187, 120);
@@ -40,668 +44,36 @@ mod palette {
     pub const BAD: Color32 = Color32::from_rgb(245, 101, 101);
     pub const INFO_BLUE: Color32 = Color32::from_rgb(99, 179, 237);
     pub const NEUTRAL: Color32 = Color32::from_rgb(160, 174, 192);
-}
 
-/// Logical query language for the battle sidebar's search box: `field: value`/`field != value`/
-/// `field > value` terms combined with `&&`/`||`/`!`/parens, plus a bare-word fallback that still
-/// does the old plain substring search. See CLAUDE.md-adjacent design discussion in chat history -
-/// no dedicated parser crate, the grammar is small enough to hand-roll.
-mod filter {
-    use std::collections::HashMap;
+    // 0 = no override, otherwise 0x01RRGGBB
+    static WIN: AtomicU32 = AtomicU32::new(0);
+    static LOSS: AtomicU32 = AtomicU32::new(0);
 
-    use pss_model::OutcomeType;
-    use pss_store::{BattleSummary, ShipIdentity};
-
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-    pub enum Side {
-        Either,
-        Attacker,
-        Defender,
+    fn pack(rgb: Option<[u8; 3]>) -> u32 {
+        rgb.map_or(0, |[r, g, b]| {
+            0x0100_0000 | (r as u32) << 16 | (g as u32) << 8 | b as u32
+        })
     }
 
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-    pub enum Field {
-        PlayerId,
-        PlayerName,
-        Alliance,
-        ShipId,
-        Level,
-        Trophy,
-        Race,
-        BattleId,
-        Outcome,
-    }
-
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-    pub enum Op {
-        Eq,
-        Gt,
-        Lt,
-        Ge,
-        Le,
-    }
-
-    #[derive(Debug, Clone, PartialEq)]
-    pub enum Value {
-        Text(String),
-        Number(f64),
-    }
-
-    impl Value {
-        fn from_word(w: &str) -> Value {
-            match w.parse::<f64>() {
-                Ok(n) => Value::Number(n),
-                Err(_) => Value::Text(w.to_string()),
-            }
-        }
-    }
-
-    #[derive(Debug, Clone, PartialEq)]
-    pub enum Expr {
-        And(Vec<Expr>),
-        Or(Vec<Expr>),
-        Not(Box<Expr>),
-        FreeText(String),
-        Field {
-            field: Field,
-            side: Side,
-            op: Op,
-            value: Value,
-        },
-    }
-
-    // ------------------------------------------------------------------ tokenizer
-
-    #[derive(Debug, Clone, PartialEq)]
-    enum Token {
-        LParen,
-        RParen,
-        And,
-        Or,
-        Bang,
-        NotEq,
-        Colon,
-        Ge,
-        Le,
-        Gt,
-        Lt,
-        Word(String),
-        Quoted(String),
-    }
-
-    fn tokenize(input: &str) -> Vec<Token> {
-        let chars: Vec<char> = input.chars().collect();
-        let mut tokens = Vec::new();
-        let mut i = 0;
-        while i < chars.len() {
-            let c = chars[i];
-            if c.is_whitespace() {
-                i += 1;
-                continue;
-            }
-            match c {
-                '(' => {
-                    tokens.push(Token::LParen);
-                    i += 1;
-                }
-                ')' => {
-                    tokens.push(Token::RParen);
-                    i += 1;
-                }
-                '"' => {
-                    i += 1;
-                    let start = i;
-                    while i < chars.len() && chars[i] != '"' {
-                        i += 1;
-                    }
-                    tokens.push(Token::Quoted(chars[start..i].iter().collect()));
-                    if i < chars.len() {
-                        i += 1; // closing quote
-                    }
-                }
-                '!' if chars.get(i + 1) == Some(&'=') => {
-                    tokens.push(Token::NotEq);
-                    i += 2;
-                }
-                '!' => {
-                    tokens.push(Token::Bang);
-                    i += 1;
-                }
-                '&' if chars.get(i + 1) == Some(&'&') => {
-                    tokens.push(Token::And);
-                    i += 2;
-                }
-                '|' if chars.get(i + 1) == Some(&'|') => {
-                    tokens.push(Token::Or);
-                    i += 2;
-                }
-                ':' => {
-                    tokens.push(Token::Colon);
-                    i += 1;
-                }
-                '>' if chars.get(i + 1) == Some(&'=') => {
-                    tokens.push(Token::Ge);
-                    i += 2;
-                }
-                '<' if chars.get(i + 1) == Some(&'=') => {
-                    tokens.push(Token::Le);
-                    i += 2;
-                }
-                '>' => {
-                    tokens.push(Token::Gt);
-                    i += 1;
-                }
-                '<' => {
-                    tokens.push(Token::Lt);
-                    i += 1;
-                }
-                // Stray '&'/'|' (not doubled) and anything else start/continue a bare word.
-                _ => {
-                    let start = i;
-                    while i < chars.len()
-                        && !chars[i].is_whitespace()
-                        && !"()!&|:<>\"".contains(chars[i])
-                    {
-                        i += 1;
-                    }
-                    if i == start {
-                        i += 1; // isolated '&' or '|' - skip, not meaningful alone
-                    } else {
-                        tokens.push(Token::Word(chars[start..i].iter().collect()));
-                    }
-                }
-            }
-        }
-        tokens
-    }
-
-    // ------------------------------------------------------------------ parser
-
-    struct Parser<'a> {
-        tokens: &'a [Token],
-        pos: usize,
-    }
-
-    impl<'a> Parser<'a> {
-        fn peek(&self) -> Option<&Token> {
-            self.tokens.get(self.pos)
-        }
-
-        fn advance(&mut self) -> Option<&'a Token> {
-            let t = self.tokens.get(self.pos);
-            self.pos += 1;
-            t
-        }
-
-        fn parse_or(&mut self) -> Option<Expr> {
-            let mut terms = vec![self.parse_and()?];
-            while self.peek() == Some(&Token::Or) {
-                self.advance();
-                terms.push(self.parse_and()?);
-            }
-            Some(if terms.len() == 1 {
-                terms.pop().unwrap()
-            } else {
-                Expr::Or(terms)
-            })
-        }
-
-        fn parse_and(&mut self) -> Option<Expr> {
-            let mut terms = vec![self.parse_unary()?];
-            loop {
-                match self.peek() {
-                    Some(Token::And) => {
-                        self.advance();
-                        terms.push(self.parse_unary()?);
-                    }
-                    Some(Token::Or) | Some(Token::RParen) | None => break,
-                    _ => terms.push(self.parse_unary()?), // implicit AND
-                }
-            }
-            Some(if terms.len() == 1 {
-                terms.pop().unwrap()
-            } else {
-                Expr::And(terms)
-            })
-        }
-
-        fn parse_unary(&mut self) -> Option<Expr> {
-            match self.peek() {
-                Some(Token::Bang) => {
-                    self.advance();
-                    Some(Expr::Not(Box::new(self.parse_unary()?)))
-                }
-                Some(Token::LParen) => {
-                    self.advance();
-                    let inner = self.parse_or()?;
-                    if self.peek() != Some(&Token::RParen) {
-                        return None;
-                    }
-                    self.advance();
-                    Some(inner)
-                }
-                _ => self.parse_term(),
-            }
-        }
-
-        fn parse_term(&mut self) -> Option<Expr> {
-            match self.advance()? {
-                Token::Word(w) => {
-                    let negate = match self.peek() {
-                        Some(Token::Colon) => false,
-                        Some(Token::NotEq) => true,
-                        Some(Token::Ge) | Some(Token::Le) | Some(Token::Gt) | Some(Token::Lt) => {
-                            false
-                        }
-                        _ => return Some(Expr::FreeText(w.to_lowercase())),
-                    };
-                    let (field, side) = resolve_field(w)?;
-                    let op = match self.advance()? {
-                        Token::Colon | Token::NotEq => Op::Eq,
-                        Token::Ge => Op::Ge,
-                        Token::Le => Op::Le,
-                        Token::Gt => Op::Gt,
-                        Token::Lt => Op::Lt,
-                        _ => return None,
-                    };
-                    let value = match self.advance()? {
-                        Token::Word(v) => Value::from_word(v),
-                        Token::Quoted(v) => Value::Text(v.clone()),
-                        _ => return None,
-                    };
-                    let field_expr = Expr::Field {
-                        field,
-                        side,
-                        op,
-                        value,
-                    };
-                    Some(if negate {
-                        Expr::Not(Box::new(field_expr))
-                    } else {
-                        field_expr
-                    })
-                }
-                Token::Quoted(s) => Some(Expr::FreeText(s.to_lowercase())),
-                _ => None,
-            }
-        }
-    }
-
-    fn resolve_field(name: &str) -> Option<(Field, Side)> {
-        let lower = name.to_lowercase();
-        let (side, base) = if let Some(rest) = lower.strip_prefix("atk_") {
-            (Side::Attacker, rest)
-        } else if let Some(rest) = lower.strip_prefix("def_") {
-            (Side::Defender, rest)
+    fn unpack(v: u32, default: Color32) -> Color32 {
+        if v == 0 {
+            default
         } else {
-            (Side::Either, lower.as_str())
-        };
-        let field = match base {
-            "player_id" => Field::PlayerId,
-            "player_name" => Field::PlayerName,
-            "alliance" => Field::Alliance,
-            "ship_id" => Field::ShipId,
-            "level" => Field::Level,
-            "trophy" => Field::Trophy,
-            "race" => Field::Race,
-            "battle_id" | "id" => Field::BattleId,
-            "outcome" => Field::Outcome,
-            _ => return None,
-        };
-        // battle_id/outcome are battle-level, not per-side - an atk_/def_ prefix on them is
-        // meaningless, treat it as an unrecognized field rather than silently ignoring it.
-        if matches!(field, Field::BattleId | Field::Outcome) && side != Side::Either {
-            return None;
-        }
-        Some((field, side))
-    }
-
-    /// Whether `name` (with an optional `atk_`/`def_` prefix) is a recognized filter field - used
-    /// by the search box's syntax-highlighting layouter to badge valid field names as they're
-    /// typed, independent of whether the rest of the query around it currently parses.
-    pub fn is_known_field(name: &str) -> bool {
-        resolve_field(name).is_some()
-    }
-
-    /// Parses a query. Any malformed input (unclosed paren, `field:` with no value, unknown field
-    /// name...) falls back to a plain substring search over the whole input, same as before this
-    /// query language existed - so a query that's still being typed never hides everything.
-    pub fn parse(input: &str) -> Expr {
-        if input.trim().is_empty() {
-            return Expr::And(Vec::new());
-        }
-        let tokens = tokenize(input);
-        let mut parser = Parser {
-            tokens: &tokens,
-            pos: 0,
-        };
-        match parser.parse_or() {
-            Some(expr) if parser.pos == tokens.len() => expr,
-            _ => Expr::FreeText(input.to_lowercase()),
+            Color32::from_rgb((v >> 16) as u8, (v >> 8) as u8, v as u8)
         }
     }
 
-    // ------------------------------------------------------------------ evaluation
-
-    fn normalize_keyword(s: &str) -> String {
-        s.to_lowercase()
-            .replace('é', "e")
-            .replace('è', "e")
-            .replace(' ', "_")
+    pub fn set_outcome_colors(win: Option<[u8; 3]>, loss: Option<[u8; 3]>) {
+        WIN.store(pack(win), Relaxed);
+        LOSS.store(pack(loss), Relaxed);
     }
 
-    fn outcome_keyword(battle: &BattleSummary) -> &'static str {
-        match battle.battle_outcome {
-            OutcomeType::AttackerWon if battle.defending_ship_surrendered => "abandon_adverse",
-            OutcomeType::AttackerWon => "victoire",
-            OutcomeType::DefenderWon if battle.attacking_ship_surrendered => "abandon",
-            OutcomeType::DefenderWon => "defaite",
-            OutcomeType::Draw => "egalite",
-            _ => "autre",
-        }
+    pub fn win() -> Color32 {
+        unpack(WIN.load(Relaxed), GOOD)
     }
 
-    fn compare_number(actual: f64, op: Op, value: &Value) -> bool {
-        let Value::Number(target) = value else {
-            return false;
-        };
-        match op {
-            Op::Eq => actual == *target,
-            Op::Gt => actual > *target,
-            Op::Lt => actual < *target,
-            Op::Ge => actual >= *target,
-            Op::Le => actual <= *target,
-        }
-    }
-
-    fn compare_text(actual: &str, op: Op, value: &Value) -> bool {
-        let needle = match value {
-            Value::Text(t) => t.to_lowercase(),
-            Value::Number(n) => n.to_string(),
-        };
-        let haystack = actual.to_lowercase();
-        match op {
-            Op::Eq => haystack.contains(&needle),
-            Op::Gt => haystack > needle,
-            Op::Lt => haystack < needle,
-            Op::Ge => haystack >= needle,
-            Op::Le => haystack <= needle,
-        }
-    }
-
-    fn single_side_match(
-        field: Field,
-        side: Side,
-        op: Op,
-        value: &Value,
-        battle: &BattleSummary,
-        identities: &HashMap<i32, ShipIdentity>,
-    ) -> bool {
-        let ship_id = match side {
-            Side::Attacker => battle.attacking_ship_id,
-            Side::Defender => battle.defending_ship_id,
-            Side::Either => unreachable!("resolved to a concrete side before this point"),
-        };
-        match field {
-            Field::ShipId => compare_number(ship_id as f64, op, value),
-            Field::PlayerId => identities
-                .get(&ship_id)
-                .is_some_and(|i| compare_number(i.user_id as f64, op, value)),
-            Field::PlayerName => identities
-                .get(&ship_id)
-                .is_some_and(|i| compare_text(&i.ship_name, op, value)),
-            Field::Alliance => identities.get(&ship_id).is_some_and(|i| {
-                i.alliance_name
-                    .as_deref()
-                    .is_some_and(|name| compare_text(name, op, value))
-            }),
-            Field::Level => identities
-                .get(&ship_id)
-                .is_some_and(|i| compare_number(i.ship_level as f64, op, value)),
-            Field::Trophy => identities.get(&ship_id).is_some_and(|i| {
-                i.trophy
-                    .is_some_and(|t| compare_number(t as f64, op, value))
-            }),
-            Field::Race => identities
-                .get(&ship_id)
-                .is_some_and(|i| compare_number(i.original_race_id as f64, op, value)),
-            Field::BattleId | Field::Outcome => {
-                unreachable!("battle-level fields never reach single_side_match")
-            }
-        }
-    }
-
-    pub fn matches(
-        expr: &Expr,
-        battle: &BattleSummary,
-        identities: &HashMap<i32, ShipIdentity>,
-    ) -> bool {
-        match expr {
-            Expr::And(terms) => terms.iter().all(|e| matches(e, battle, identities)),
-            Expr::Or(terms) => terms.iter().any(|e| matches(e, battle, identities)),
-            Expr::Not(inner) => !matches(inner, battle, identities),
-            Expr::FreeText(needle) => {
-                let haystack = format!(
-                    "{} {:?} {} {}",
-                    battle.id,
-                    battle.battle_outcome,
-                    battle.attacking_ship_id,
-                    battle.defending_ship_id
-                )
-                .to_lowercase();
-                haystack.contains(needle)
-            }
-            Expr::Field {
-                field,
-                side,
-                op,
-                value,
-            } => match field {
-                Field::BattleId => compare_number(battle.id as f64, *op, value),
-                Field::Outcome => {
-                    *op == Op::Eq
-                        && matches!(value, Value::Text(t) if normalize_keyword(t) == outcome_keyword(battle))
-                }
-                _ => {
-                    let sides: &[Side] = match side {
-                        Side::Either => &[Side::Attacker, Side::Defender],
-                        Side::Attacker => &[Side::Attacker],
-                        Side::Defender => &[Side::Defender],
-                    };
-                    sides
-                        .iter()
-                        .any(|&s| single_side_match(*field, s, *op, value, battle, identities))
-                }
-            },
-        }
-    }
-
-    #[cfg(test)]
-    mod tests {
-        use super::*;
-
-        fn battle(
-            id: i64,
-            outcome: OutcomeType,
-            atk_id: i32,
-            def_id: i32,
-            atk_surrendered: bool,
-            def_surrendered: bool,
-        ) -> BattleSummary {
-            BattleSummary {
-                id,
-                checksum: format!("c{id}"),
-                imported_at: "2026-01-01T00:00:00Z".to_string(),
-                battle_outcome: outcome,
-                last_frame: 1000,
-                attacking_ship_id: atk_id,
-                defending_ship_id: def_id,
-                attacking_ship_surrendered: atk_surrendered,
-                defending_ship_surrendered: def_surrendered,
-            }
-        }
-
-        fn identity(ship_id: i32, user_id: i32, name: &str) -> ShipIdentity {
-            ShipIdentity {
-                ship_id,
-                user_id,
-                ship_name: name.to_string(),
-                ship_level: 10,
-                original_race_id: 1,
-                power_score: 900,
-                trophy: Some(2000),
-                alliance_id: Some(1),
-                alliance_name: Some("Trek Ad Astra".to_string()),
-            }
-        }
-
-        #[test]
-        fn empty_query_matches_everything() {
-            let b = battle(1, OutcomeType::AttackerWon, 10, 20, false, false);
-            assert!(matches(&parse(""), &b, &HashMap::new()));
-            assert!(matches(&parse("   "), &b, &HashMap::new()));
-        }
-
-        #[test]
-        fn free_text_matches_ship_id_substring() {
-            let b = battle(1, OutcomeType::AttackerWon, 9397907, 20, false, false);
-            assert!(matches(&parse("9397907"), &b, &HashMap::new()));
-            assert!(!matches(&parse("nope"), &b, &HashMap::new()));
-        }
-
-        #[test]
-        fn player_name_matches_either_side() {
-            let b = battle(1, OutcomeType::AttackerWon, 10, 20, false, false);
-            let mut identities = HashMap::new();
-            identities.insert(20, identity(20, 999, "Dark_01"));
-            assert!(matches(&parse("player_name: dark"), &b, &identities));
-            assert!(matches(&parse("player_name: Dark_01"), &b, &identities));
-            assert!(!matches(&parse("player_name: Nobody"), &b, &identities));
-        }
-
-        #[test]
-        fn side_prefix_restricts_to_one_side() {
-            let b = battle(1, OutcomeType::AttackerWon, 10, 20, false, false);
-            let mut identities = HashMap::new();
-            identities.insert(20, identity(20, 999, "Dark_01"));
-            assert!(matches(&parse("def_player_name: Dark_01"), &b, &identities));
-            assert!(!matches(
-                &parse("atk_player_name: Dark_01"),
-                &b,
-                &identities
-            ));
-        }
-
-        #[test]
-        fn not_equal_excludes_battles_involving_either_side() {
-            let b = battle(1, OutcomeType::AttackerWon, 10, 20, false, false);
-            let mut identities = HashMap::new();
-            identities.insert(20, identity(20, 999, "Dark_01"));
-            assert!(!matches(&parse("player_name != Dark_01"), &b, &identities));
-            assert!(matches(
-                &parse("player_name != Somebody_Else"),
-                &b,
-                &identities
-            ));
-        }
-
-        #[test]
-        fn bang_prefix_negates_a_group() {
-            let b = battle(1, OutcomeType::AttackerWon, 10, 20, false, false);
-            assert!(matches(&parse("!outcome: defaite"), &b, &HashMap::new()));
-            assert!(!matches(&parse("!outcome: victoire"), &b, &HashMap::new()));
-        }
-
-        #[test]
-        fn and_or_precedence_and_parens() {
-            let b = battle(1, OutcomeType::AttackerWon, 10, 20, false, false);
-            let mut identities = HashMap::new();
-            identities.insert(20, identity(20, 999, "Dark_01"));
-            identities.insert(10, identity(10, 1, "Me"));
-
-            assert!(matches(
-                &parse("player_name: Dark_01 && outcome: victoire"),
-                &b,
-                &identities
-            ));
-            assert!(matches(
-                &parse("player_name: Nobody || outcome: victoire"),
-                &b,
-                &identities
-            ));
-            assert!(matches(
-                &parse("(player_name: Nobody || player_name: Dark_01) && atk_player_id > 0"),
-                &b,
-                &identities
-            ));
-        }
-
-        #[test]
-        fn implicit_and_between_bare_terms() {
-            let b = battle(1, OutcomeType::AttackerWon, 10, 20, false, false);
-            let mut identities = HashMap::new();
-            identities.insert(20, identity(20, 999, "Dark_01"));
-            assert!(matches(
-                &parse("player_name: Dark_01 outcome: victoire"),
-                &b,
-                &identities
-            ));
-            assert!(!matches(
-                &parse("player_name: Dark_01 outcome: defaite"),
-                &b,
-                &identities
-            ));
-        }
-
-        #[test]
-        fn comparison_operators_on_trophy() {
-            let b = battle(1, OutcomeType::AttackerWon, 10, 20, false, false);
-            let mut identities = HashMap::new();
-            identities.insert(20, identity(20, 999, "Dark_01"));
-            assert!(matches(&parse("def_trophy > 1000"), &b, &identities));
-            assert!(!matches(&parse("def_trophy > 5000"), &b, &identities));
-            assert!(matches(&parse("def_trophy >= 2000"), &b, &identities));
-        }
-
-        #[test]
-        fn abandon_adverse_outcome_keyword() {
-            let win_via_surrender = battle(1, OutcomeType::AttackerWon, 10, 20, false, true);
-            let clean_win = battle(2, OutcomeType::AttackerWon, 10, 20, false, false);
-            assert!(matches(
-                &parse("outcome: abandon_adverse"),
-                &win_via_surrender,
-                &HashMap::new()
-            ));
-            assert!(!matches(
-                &parse("outcome: abandon_adverse"),
-                &clean_win,
-                &HashMap::new()
-            ));
-            assert!(matches(
-                &parse("outcome: victoire"),
-                &clean_win,
-                &HashMap::new()
-            ));
-        }
-
-        #[test]
-        fn malformed_query_falls_back_to_free_text() {
-            // Unclosed paren, a dangling "field:" with no value, and an unknown field name are
-            // all malformed - each falls back to a plain substring search over the raw (lowered)
-            // input rather than panicking or matching nothing.
-            assert_eq!(
-                parse("(player_name: Foo"),
-                Expr::FreeText("(player_name: foo".to_string())
-            );
-            assert_eq!(
-                parse("player_name:"),
-                Expr::FreeText("player_name:".to_string())
-            );
-            assert_eq!(
-                parse("unknown_field: 5"),
-                Expr::FreeText("unknown_field: 5".to_string())
-            );
-        }
+    pub fn loss() -> Color32 {
+        unpack(LOSS.load(Relaxed), BAD)
     }
 }
 
@@ -739,7 +111,10 @@ fn main() -> eframe::Result<()> {
             // render Patch notes' UGC design thumbnails straight from their blog-hosted URLs.
             egui_extras::install_image_loaders(&cc.egui_ctx);
             match PssGuiApp::new(log_buffer) {
-                Ok(app) => Ok(Box::new(app) as Box<dyn eframe::App>),
+                Ok(app) => {
+                    app.appearance.apply(&cc.egui_ctx);
+                    Ok(Box::new(app) as Box<dyn eframe::App>)
+                }
                 Err(err) => Err(err.to_string().into()),
             }
         }),
@@ -1483,6 +858,9 @@ struct PssGuiApp {
     crew: crew::CrewTab,
     /// Code of the active UI language, one of `i18n::LANGUAGES`.
     lang: &'static str,
+
+    appearance: appearance::Appearance,
+    appearance_window: appearance::Window,
 }
 
 impl PssGuiApp {
@@ -1554,6 +932,8 @@ impl PssGuiApp {
             log_min_level: tracing::Level::INFO,
             crew: crew::CrewTab::load(),
             lang,
+            appearance: appearance::Appearance::load(&paths.appearance_file()),
+            appearance_window: appearance::Window::default(),
         };
 
         app.reload()?;
@@ -2210,21 +1590,84 @@ impl eframe::App for PssGuiApp {
             self.designs_syncing = syncing_now;
         }
 
+        const SC_IMPORT: egui::KeyboardShortcut =
+            egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::O);
+        const SC_EXPORT: egui::KeyboardShortcut =
+            egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::E);
+        const SC_APPEARANCE: egui::KeyboardShortcut =
+            egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::Comma);
+        const SC_REFRESH: egui::KeyboardShortcut =
+            egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::R);
+        const SC_QUIT: egui::KeyboardShortcut =
+            egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::Q);
+
+        let ctx = ui.ctx().clone();
+        let (mut do_import, mut do_export, mut do_appearance, mut do_refresh, mut do_quit) = ctx
+            .input_mut(|i| {
+                (
+                    i.consume_shortcut(&SC_IMPORT),
+                    i.consume_shortcut(&SC_EXPORT),
+                    i.consume_shortcut(&SC_APPEARANCE),
+                    i.consume_shortcut(&SC_REFRESH),
+                    i.consume_shortcut(&SC_QUIT),
+                )
+            });
+
+        let appearance_file = app_paths().appearance_file();
+        match self
+            .appearance_window
+            .show(&ctx, &mut self.appearance, &appearance_file)
+        {
+            appearance::Action::None => {}
+            appearance::Action::Changed => self.appearance.apply(&ctx),
+            appearance::Action::Applied => {
+                self.appearance.apply(&ctx);
+                if let Err(err) = self.appearance.save(&appearance_file) {
+                    self.log(
+                        tracing::Level::WARN,
+                        tr!("log.appearance_save_failed", err = err.to_string()),
+                    );
+                }
+            }
+            appearance::Action::Cancelled(original) => {
+                self.appearance = original;
+                self.appearance.apply(&ctx);
+            }
+        }
+
         egui::Panel::top("menu_bar").show(ui, |ui| {
             egui::MenuBar::new().ui(ui, |ui| {
                 ui.menu_button(tr!("menu.file"), |ui| {
-                    if ui.button(tr!("menu.import_bin")).clicked() {
-                        if let Some(path) = rfd::FileDialog::new().pick_file() {
-                            self.import_file(path);
-                        }
+                    let item = |ui: &mut egui::Ui, label: String, sc: &egui::KeyboardShortcut| {
+                        ui.add(egui::Button::new(label).shortcut_text(ui.ctx().format_shortcut(sc)))
+                            .clicked()
+                    };
+                    if item(ui, tr!("menu.import_bin"), &SC_IMPORT) {
+                        do_import = true;
                         ui.close();
                     }
-                    if ui.button(tr!("menu.refresh")).clicked() {
-                        let _ = self.reload();
+                    let export = egui::Button::new(tr!("menu.export_json"))
+                        .shortcut_text(ui.ctx().format_shortcut(&SC_EXPORT));
+                    if ui
+                        .add_enabled(self.selected_battle_id.is_some(), export)
+                        .clicked()
+                    {
+                        do_export = true;
                         ui.close();
                     }
-                    if ui.button(tr!("menu.quit")).clicked() {
-                        std::process::exit(0);
+                    if item(ui, tr!("menu.refresh"), &SC_REFRESH) {
+                        do_refresh = true;
+                        ui.close();
+                    }
+                    ui.separator();
+                    if item(ui, tr!("menu.appearance"), &SC_APPEARANCE) {
+                        do_appearance = true;
+                        ui.close();
+                    }
+                    ui.separator();
+                    if item(ui, tr!("menu.quit"), &SC_QUIT) {
+                        do_quit = true;
+                        ui.close();
                     }
                 });
                 ui.menu_button(tr!("menu.battles"), |_ui| {});
@@ -2264,6 +1707,23 @@ impl eframe::App for PssGuiApp {
                 }
             });
         });
+
+        if do_import && let Some(path) = rfd::FileDialog::new().pick_file() {
+            self.import_file(path);
+        }
+        if do_export && let Some(id) = self.selected_battle_id {
+            self.export_battle_json(id);
+        }
+        if do_refresh {
+            let _ = self.reload();
+        }
+        if do_appearance {
+            self.appearance_window.open(&self.appearance);
+        }
+        if do_quit {
+            // `Close` rather than `process::exit` so `Drop` runs and stops the launched game.
+            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+        }
 
         egui::Panel::bottom("status_bar").show(ui, |ui| {
             ui.horizontal(|ui| {

@@ -32,7 +32,11 @@ mod tests {
     /// Every `tr!("key"...)` literal in the GUI sources, including calls split over lines.
     fn keys_used_in_sources() -> Vec<String> {
         let mut keys = Vec::new();
-        for src in [include_str!("main.rs"), include_str!("crew.rs")] {
+        for src in [
+            include_str!("main.rs"),
+            include_str!("crew.rs"),
+            include_str!("appearance.rs"),
+        ] {
             let mut rest = src;
             while let Some(i) = rest.find("tr!(") {
                 // skip longer macro names ending in "tr!(" (none today, but cheap to guard)

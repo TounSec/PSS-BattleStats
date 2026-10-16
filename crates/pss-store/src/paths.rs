@@ -22,6 +22,7 @@ const BATTLES_DB: &str = "pss-battlestats.db";
 const DESIGNS_DB: &str = "pss-designs-cache.db";
 const CONFIG_FILE: &str = "pss-gui-config.json";
 const CREW_PLAN: &str = "pss-crew-plan.json";
+const APPEARANCE_FILE: &str = "appearance.toml";
 #[cfg(windows)]
 const CA_CERT: &str = "pss-capture-ca.crt";
 #[cfg(not(windows))]
@@ -84,6 +85,10 @@ impl AppPaths {
 
     pub fn config_file(&self) -> PathBuf {
         self.config.join(CONFIG_FILE)
+    }
+
+    pub fn appearance_file(&self) -> PathBuf {
+        self.config.join(APPEARANCE_FILE)
     }
 
     pub fn designs_db(&self) -> PathBuf {
