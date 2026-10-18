@@ -181,6 +181,11 @@ source = "source: %{src} · parsed locally from the blog's RSS feed"
 title = "Log"
 empty = "(no entries yet)"
 
+[drone]
+summary = "%{deployed} deployed · %{destroyed} destroyed (%{survival} % survived) · %{attacks} attacks (%{per_drone} per drone)"
+by_carrier = "By carrier room"
+carrier_line = "Room #%{room}: %{deployed} deployed, %{destroyed} destroyed, %{attacks} attacks"
+
 [table]
 projectiles_hover = "%{n} projectiles (volley of %{volley} per launch)"
 room_n = "%{kind} (room #%{id})"
@@ -217,6 +222,8 @@ craft = "craft"
 fire = "🔥 fire (est.)"
 aoe = "AOE"
 drone_detail = "%{total} (%{ap} AP / %{crew} crew)"
+per_unit = "Dmg/unit"
+per_unit_hover = "Estimated damage per drone (or launch) deployed: row total ÷ quantity."
 
 [log]
 started = "pss-gui started"

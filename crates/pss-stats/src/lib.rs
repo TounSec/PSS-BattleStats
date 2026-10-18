@@ -887,6 +887,82 @@ pub fn compute_craft_stats(ship: &ShipReport) -> CraftStats {
     stats
 }
 
+/// Drones launched from one Carrier room. `CraftReport.original_room_id` is the only link a drone
+/// has to anything, so this is the finest breakdown that is exact (per craft *design* would be an
+/// estimate, see `ItemWeaponStats::projectiles`).
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub struct CarrierDroneStats {
+    pub room_id: i32,
+    pub deployed: u32,
+    pub destroyed: u32,
+    pub attacks: i32,
+}
+
+impl CarrierDroneStats {
+    /// Share of the room's drones that survived the battle; `None` when it deployed none
+    pub fn survival_rate(&self) -> Option<f64> {
+        survival_rate(self.deployed, self.destroyed)
+    }
+
+    pub fn attacks_per_drone(&self) -> Option<f64> {
+        (self.deployed > 0).then(|| self.attacks as f64 / self.deployed as f64)
+    }
+}
+
+/// Survival and activity of a ship's drones, from `craftReports` (one entry per drone launched)
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct DroneSummary {
+    pub deployed: u32,
+    pub destroyed: u32,
+    pub attacks: i32,
+    /// One entry per Carrier room that launched drones, ordered by room id
+    pub carriers: Vec<CarrierDroneStats>,
+}
+
+impl DroneSummary {
+    pub fn survival_rate(&self) -> Option<f64> {
+        survival_rate(self.deployed, self.destroyed)
+    }
+
+    pub fn attacks_per_drone(&self) -> Option<f64> {
+        (self.deployed > 0).then(|| self.attacks as f64 / self.deployed as f64)
+    }
+}
+
+fn survival_rate(deployed: u32, destroyed: u32) -> Option<f64> {
+    (deployed > 0).then(|| (deployed - destroyed.min(deployed)) as f64 / deployed as f64)
+}
+
+pub fn drone_summary(ship: &ShipReport) -> DroneSummary {
+    let mut by_room: HashMap<i32, CarrierDroneStats> = HashMap::new();
+
+    for craft in ship.craft_reports.values() {
+        let room = by_room
+            .entry(craft.original_room_id)
+            .or_insert_with(|| CarrierDroneStats {
+                room_id: craft.original_room_id,
+                ..CarrierDroneStats::default()
+            });
+
+        room.deployed += 1;
+        room.attacks += craft.attacks;
+
+        if craft.is_destroyed {
+            room.destroyed += 1;
+        }
+    }
+
+    let mut carriers: Vec<CarrierDroneStats> = by_room.into_values().collect();
+    carriers.sort_by_key(|c| c.room_id);
+
+    DroneSummary {
+        deployed: carriers.iter().map(|c| c.deployed).sum(),
+        destroyed: carriers.iter().map(|c| c.destroyed).sum(),
+        attacks: carriers.iter().map(|c| c.attacks).sum(),
+        carriers,
+    }
+}
+
 /// Aggregated crew stats for a ship.
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct CrewStats {
@@ -1668,6 +1744,39 @@ mod tests {
             attacks,
             original_room_id,
         }
+    }
+
+    #[test]
+    fn drone_summary_groups_drones_by_carrier_room() {
+        let mut ship = full_ship_report(StdHashMap::new());
+        let mut destroyed = craft_report(2, 10);
+
+        destroyed.is_destroyed = true;
+        ship.craft_reports.insert(1, craft_report(5, 10));
+        ship.craft_reports.insert(2, destroyed);
+        ship.craft_reports.insert(3, craft_report(4, 20));
+
+        let summary = drone_summary(&ship);
+
+        assert_eq!(summary.deployed, 3);
+        assert_eq!(summary.destroyed, 1);
+        assert_eq!(summary.attacks, 11);
+        assert_eq!(summary.survival_rate(), Some(2.0 / 3.0));
+        assert_eq!(summary.carriers.len(), 2);
+        assert_eq!(summary.carriers[0].room_id, 10);
+        assert_eq!(summary.carriers[0].deployed, 2);
+        assert_eq!(summary.carriers[0].destroyed, 1);
+        assert_eq!(summary.carriers[0].attacks_per_drone(), Some(3.5));
+        assert_eq!(summary.carriers[1].survival_rate(), Some(1.0));
+    }
+
+    #[test]
+    fn drone_summary_of_a_ship_without_drones_has_no_rates() {
+        let summary = drone_summary(&full_ship_report(StdHashMap::new()));
+
+        assert_eq!(summary, DroneSummary::default());
+        assert_eq!(summary.survival_rate(), None);
+        assert_eq!(summary.attacks_per_drone(), None);
     }
 
     #[test]

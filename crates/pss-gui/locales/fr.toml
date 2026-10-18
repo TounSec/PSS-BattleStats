@@ -181,6 +181,11 @@ source = "source: %{src} · parsé localement depuis le flux RSS du blog"
 title = "Journal"
 empty = "(aucune entrée pour le moment)"
 
+[drone]
+summary = "%{deployed} déployés · %{destroyed} détruits (survie %{survival} %) · %{attacks} attaques (%{per_drone} par drone)"
+by_carrier = "Par salle porte-drones"
+carrier_line = "Salle #%{room} : %{deployed} déployés, %{destroyed} détruits, %{attacks} attaques"
+
 [table]
 projectiles_hover = "%{n} projectiles (volée de %{volley} par lancement)"
 room_n = "%{kind} (salle #%{id})"
@@ -217,6 +222,8 @@ craft = "craft"
 fire = "🔥 feu (est.)"
 aoe = "AOE"
 drone_detail = "%{total} (%{ap} AP / %{crew} équip.)"
+per_unit = "Dég./unité"
+per_unit_hover = "Dégâts estimés par drone (ou par lancement) déployé : total de la ligne ÷ quantité."
 
 [log]
 started = "pss-gui démarré"

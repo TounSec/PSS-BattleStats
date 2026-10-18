@@ -481,6 +481,7 @@ enum DroneSortKey {
     Craft,
     Fire,
     Dps,
+    PerUnit,
 }
 
 /// One ammo/craft/android item this side deployed, resolved for the "Consommés" chip row.
@@ -2210,6 +2211,10 @@ impl PssGuiApp {
             &mut self.drone_sort,
             "drones_defender",
         );
+        ui.heading(tr!("section.drones", side = detail.attacker.label()));
+        render_drone_summary(ui, &detail.attacker);
+        ui.heading(tr!("section.drones", side = detail.defender.label()));
+        render_drone_summary(ui, &detail.defender);
 
         if resolve_identities_clicked {
             self.resolve_ship_identities();
@@ -3682,6 +3687,41 @@ fn total_of(d: &pss_stats::WeaponDamage) -> f64 {
     d.hull + d.system + d.character + d.shield + d.ap + d.craft + d.fire_ap + d.fire_character
 }
 
+/// Survival and activity of the drones a side launched, above the per-design table.
+/// Exact figures estimate
+fn render_drone_summary(ui: &mut egui::Ui, side: &SideDetail) {
+    let summary = pss_stats::drone_summary(&side.ship);
+    let (Some(survival), Some(per_drone)) = (summary.survival_rate(), summary.attacks_per_drone())
+    else {
+        return;
+    };
+
+    ui.label(tr!(
+        "drone.summary",
+        deployed = summary.deployed,
+        destroyed = summary.destroyed,
+        survival = format!("{:.0}", survival * 100.0),
+        attacks = summary.attacks,
+        per_drone = format!("{per_drone:.1}")
+    ));
+
+    if summary.carriers.len() > 1 {
+        egui::CollapsingHeader::new(tr!("drone.by_carrier"))
+            .id_salt(("drone_carriers", side.ship_id))
+            .show(ui, |ui| {
+                for carrier in &summary.carriers {
+                    ui.label(tr!(
+                        "drone.carrier_line",
+                        room = carrier.room_id,
+                        deployed = carrier.deployed,
+                        destroyed = carrier.destroyed,
+                        attacks = carrier.attacks
+                    ));
+                }
+            });
+    }
+}
+
 fn render_drone_table(
     ui: &mut egui::Ui,
     side: &SideDetail,
@@ -3717,6 +3757,13 @@ fn render_drone_table(
                 0.0
             }
         };
+        let per_unit = |item: &pss_stats::ItemWeaponStats| -> f64 {
+            if item.quantity_deployed > 0 {
+                total_of(&item.total()) / item.quantity_deployed as f64
+            } else {
+                0.0
+            }
+        };
         let ordering = match sort.0 {
             DroneSortKey::Name => a.item_name.cmp(&b.item_name),
             DroneSortKey::Quantity => a.quantity_deployed.cmp(&b.quantity_deployed),
@@ -3728,6 +3775,7 @@ fn render_drone_table(
             DroneSortKey::Craft => a.total().craft.total_cmp(&b.total().craft),
             DroneSortKey::Fire => fire(a).total_cmp(&fire(b)),
             DroneSortKey::Dps => dps(a).total_cmp(&dps(b)),
+            DroneSortKey::PerUnit => per_unit(a).total_cmp(&per_unit(b)),
         };
         match sort.1 {
             SortDirection::Ascending => ordering,
@@ -3747,6 +3795,7 @@ fn render_drone_table(
         sortable_header(ui, &tr!("table.fire"), DroneSortKey::Fire, sort);
         ui.label(tr!("table.aoe"));
         sortable_header(ui, &tr!("table.dps"), DroneSortKey::Dps, sort);
+        sortable_header(ui, &tr!("table.per_unit"), DroneSortKey::PerUnit, sort);
         ui.end_row();
 
         for item in sorted {
@@ -3793,6 +3842,13 @@ fn render_drone_table(
                 0.0
             };
             ui.label(format!("{dps:.2}"));
+            let per_unit = if item.quantity_deployed > 0 {
+                total_of(&t) / item.quantity_deployed as f64
+            } else {
+                0.0
+            };
+            ui.label(format!("{per_unit:.1}"))
+                .on_hover_text(tr!("table.per_unit_hover"));
             ui.end_row();
         }
     });
