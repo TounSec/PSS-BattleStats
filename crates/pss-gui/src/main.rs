@@ -22,6 +22,8 @@ use pss_stats::{NamedCrewStat, ShipBattleStats};
 use pss_store::paths::app_paths;
 use pss_store::{BattleStore, BattleSummary, ShipIdentity, ShipWinRate};
 
+use crate::palette::loss;
+
 rust_i18n::i18n!("locales", fallback = "en");
 
 const CAPTURE_LISTEN: &str = "127.0.0.1:8484";
@@ -527,7 +529,7 @@ struct SideDetail {
 /// outcome coding already used for the battle-list marker (red = destroyed, orange = surrendered).
 fn ship_status_label(ship: &ShipReport) -> Option<(OutcomeKind, egui::Color32)> {
     if ship.is_destroyed() {
-        Some((OutcomeKind::Destroyed, palette::BAD))
+        Some((OutcomeKind::Destroyed, palette::loss()))
     } else if ship.is_surrendered() {
         Some((OutcomeKind::Surrender, palette::WARN))
     } else {
@@ -1968,11 +1970,11 @@ impl PssGuiApp {
                         OutcomeType::AttackerWon if battle.defending_ship_surrendered => {
                             palette::WARN
                         }
-                        OutcomeType::AttackerWon => palette::GOOD,
+                        OutcomeType::AttackerWon => palette::win(),
                         OutcomeType::DefenderWon if battle.attacking_ship_surrendered => {
                             palette::WARN
                         }
-                        OutcomeType::DefenderWon => palette::BAD,
+                        OutcomeType::DefenderWon => palette::loss(),
                         _ => palette::WARN,
                     };
                     let duration_secs = battle.last_frame as f64 / self.fps;
@@ -2289,9 +2291,9 @@ impl PssGuiApp {
                 max = format!("{:.0}", side.max_hp)
             ));
             let hp_color = if side.hull_remaining <= 0.0 {
-                palette::BAD
+                palette::loss()
             } else {
-                palette::GOOD
+                palette::win()
             };
             ui.add(
                 egui::ProgressBar::new((side.hull_remaining / side.max_hp.max(1.0)) as f32)
