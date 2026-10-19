@@ -12,7 +12,9 @@ use std::collections::HashMap;
 
 use anyhow::Result;
 use pss_designs::DesignsCache;
-use pss_model::{CategoryType, ItemType, RoomReport, RoomType, ShipReport, SpecialAbilityType};
+use pss_model::{
+    CategoryType, CraftReport, ItemType, RoomReport, RoomType, ShipReport, SpecialAbilityType,
+};
 use pss_store::StoredBattle;
 
 /// Client tick rate, sourced from community reverse-engineering (PSSCombat, HerzbubeWiki: "the
