@@ -85,7 +85,7 @@ jobs:
           done
           cp LICENSE "$dir/"
           if [ -n "$ext" ]; then 7z a "$dir.zip" "$dir"; else tar czf "$dir.tar.gz" "$dir"; fi
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: bin-${{ matrix.name }}
           path: |
@@ -111,7 +111,7 @@ jobs:
           wix build installer/main.wxs `
             -d Version=${{ needs.prepare.outputs.core }} `
             -o PSS-BattleStats-${{ needs.prepare.outputs.full }}.msi
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: msi
           path: PSS-BattleStats-*.msi
