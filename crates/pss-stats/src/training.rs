@@ -202,7 +202,7 @@ pub fn training_gain(stat: CrewStat, base: f64, points: i32) -> f64 {
     }
 }
 
-// The epsilon absorbs float noise (e.g. 0.49999999 from 10 × 5 / 100 computed as 0.5 - ε).
+// The epsilon absorbs float noise (e.g. 0.49999999 from 10 × 5 / 100 computed as 0.5 - ε)
 fn round_half_up(value: f64) -> f64 {
     (value + 1e-9).floor()
         + if (value + 1e-9).fract() >= 0.5 {
@@ -278,7 +278,7 @@ mod tests {
 
     #[test]
     fn equipment_mask_maps_bits_to_slots() {
-        // Real designs: Neptune Mariner 12 = Leg + Weapon, Laura 62 = everything but Head.
+        // Real designs: Neptune Mariner 12 = Leg + Weapon, Laura 62 = everything but Head
         assert_eq!(
             EquipmentSlot::from_mask(12),
             vec![EquipmentSlot::Leg, EquipmentSlot::Weapon]
@@ -349,7 +349,7 @@ mod tests {
 
     #[test]
     fn stat_at_level_follows_progression_curve() {
-        // Neptune Mariner (real design #583): Weapon 12 -> 24, Linear, max level 40.
+        // Neptune Mariner (real design #583): Weapon 12 -> 24, Linear, max level 40
         assert_eq!(stat_at_level(12.0, 24.0, 1, 40, "Linear"), 12.0);
         assert_eq!(stat_at_level(12.0, 24.0, 40, 40, "Linear"), 24.0);
         let mid = (20 - 1) as f64 / 39.0;

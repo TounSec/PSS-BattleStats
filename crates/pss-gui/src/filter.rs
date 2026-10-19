@@ -151,7 +151,7 @@ fn tokenize(input: &str) -> Vec<Token> {
                 tokens.push(Token::Lt);
                 i += 1;
             }
-            // Stray '&'/'|' (not doubled) and anything else start/continue a bare word.
+            // Stray '&'/'|' (not doubled) and anything else start/continue a bare word
             _ => {
                 let start = i;
                 while i < chars.len()
@@ -303,7 +303,7 @@ fn resolve_field(name: &str) -> Option<(Field, Side)> {
         _ => return None,
     };
     // battle_id/outcome are battle-level, not per-side - an atk_/def_ prefix on them is
-    // meaningless, treat it as an unrecognized field rather than silently ignoring it.
+    // meaningless, treat it as an unrecognized field rather than silently ignoring it
     if matches!(field, Field::BattleId | Field::Outcome) && side != Side::Either {
         return None;
     }
@@ -642,7 +642,7 @@ mod tests {
     fn malformed_query_falls_back_to_free_text() {
         // Unclosed paren, a dangling "field:" with no value, and an unknown field name are
         // all malformed - each falls back to a plain substring search over the raw (lowered)
-        // input rather than panicking or matching nothing.
+        // input rather than panicking or matching nothing
         assert_eq!(
             parse("(player_name: Foo"),
             Expr::FreeText("(player_name: foo".to_string())

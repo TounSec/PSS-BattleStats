@@ -44,7 +44,7 @@ async fn main() -> Result<()> {
     tracing_subscriber::fmt::init();
     let cli = Cli::parse();
     // The default locations live in per-user folders that may not exist yet. Failing here isn't
-    // fatal: explicit --db/--ca-cert/... paths elsewhere still work.
+    // fatal: explicit --db/--ca-cert/... paths elsewhere still work
     let _ = app_paths().ensure_dirs();
 
     match cli.command {

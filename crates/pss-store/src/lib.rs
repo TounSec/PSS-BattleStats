@@ -587,7 +587,7 @@ impl BattleStore {
         // caches, there's no external API to re-fetch here - every pre-existing row's real value
         // is already sitting in its own `raw_json`, so this backfills it directly instead of
         // needing a version-gate/force-resync dance. Left NULL (not NOT NULL/DEFAULT) so this
-        // query can tell "never computed" apart from a real `false`.
+        // query can tell "never computed" apart from a real `false`
         for column in ["attacking_ship_surrendered", "defending_ship_surrendered"] {
             if let Err(err) = conn.execute(
                 &format!("ALTER TABLE battles ADD COLUMN {column} INTEGER"),
@@ -737,10 +737,10 @@ mod tests {
         assert_eq!(page[1].checksum, "b");
         assert_eq!(page[0].battle_outcome, OutcomeType::DefenderWon);
         // sample_payload's attacker has currentShipHp=0 but hullDamage far below maxShipHp -
-        // surrendered, not destroyed (see ShipReport::is_surrendered).
+        // surrendered, not destroyed (see ShipReport::is_surrendered)
         assert!(page[0].attacking_ship_surrendered);
         // The defender's hullDamage (220000) far exceeds maxShipHp (2200) - a real destruction,
-        // not a surrender.
+        // not a surrender
         assert!(!page[0].defending_ship_surrendered);
     }
 
@@ -750,7 +750,7 @@ mod tests {
         // is absent and a row is inserted directly, bypassing `insert_battle` (which already sets
         // it correctly for new rows - this test is specifically about *old* rows). Opening that
         // database must backfill the real value from the row's own `raw_json`, not from an
-        // external source (there isn't one here, unlike pss-designs' caches).
+        // external source (there isn't one here, unlike pss-designs' caches)
         let conn = Connection::open_in_memory().expect("In-memory connection should open");
         conn.execute_batch(
             "CREATE TABLE battles (
@@ -821,7 +821,7 @@ mod tests {
 
     // Nested ship attributes trimmed from a real BattleService/CreateBattle capture (values kept
     // as observed: attacker ShipId 9397907/UserId 12363942 "Electouns2", defender ShipId 8594857/
-    // UserId 11259701 "Dark_01" - see docs/pss_data_correlation/PvP-Win/1/create_battle.resp).
+    // UserId 11259701 "Dark_01" - see docs/pss_data_correlation/PvP-Win/1/create_battle.resp)
     const SAMPLE_CREATE_BATTLE_XML: &str = r#"<BattleService><CreateBattle ChanceToFindStarBattles="0"><Battle BattleId="438225" AttackingShipId="9397907" DefendingShipId="8594857" RandomSeed="754" AttackingShipXml="&lt;Ship ShipId=&quot;9397907&quot; ShipDesignId=&quot;23&quot; ShipLevel=&quot;7&quot; PowerScore=&quot;900&quot; UserId=&quot;12363942&quot; OriginalRaceId=&quot;3&quot; ShipName=&quot;Electouns2&quot; /&gt;" DefendingShipXml="&lt;Ship ShipId=&quot;8594857&quot; ShipDesignId=&quot;21&quot; ShipLevel=&quot;7&quot; PowerScore=&quot;876&quot; UserId=&quot;11259701&quot; OriginalRaceId=&quot;1&quot; ShipName=&quot;Dark_01&quot; /&gt;" /></CreateBattle></BattleService>"#;
 
     #[test]
@@ -854,7 +854,7 @@ mod tests {
     }
 
     // Trimmed from a real UserService/SearchUsers response (public endpoint, no access token) -
-    // extra unrelated attributes kept to prove they're tolerated, not just absent.
+    // extra unrelated attributes kept to prove they're tolerated, not just absent
     const SAMPLE_SEARCH_USERS_XML: &str = r#"<UserService><SearchUsers><Users><User Id="12363942" Name="Electouns2" GenderType="Unknown" Trophy="2150" AllianceId="45809" AllianceName="Trek Ad Astra" /></Users></SearchUsers></UserService>"#;
     const SAMPLE_SEARCH_USERS_NO_ALLIANCE_XML: &str = r#"<UserService><SearchUsers><Users><User Id="1" Name="Solo" Trophy="10" AllianceId="0" AllianceName="" /></Users></SearchUsers></UserService>"#;
     const SAMPLE_SEARCH_USERS_EMPTY_XML: &str =
@@ -900,7 +900,7 @@ mod tests {
             None
         );
         // A result set that doesn't contain an exact name match (near-match search) also counts
-        // as "not found" - resolving the wrong player's profile would be worse than skipping it.
+        // as "not found" - resolving the wrong player's profile would be worse than skipping it
         assert_eq!(
             parse_search_users_xml(SAMPLE_SEARCH_USERS_XML, "Electouns3").unwrap(),
             None
@@ -957,7 +957,7 @@ mod tests {
             })
             .expect("Profile update should succeed");
 
-        // The same ship reappears in a later CreateBattle capture, maybe with a leveled-up ship.
+        // The same ship reappears in a later CreateBattle capture, maybe with a leveled-up ship
         store
             .upsert_ship_identity(&sample_ship_identity_seen(9397907, 12363942, "Electouns2"))
             .expect("Re-upsert should succeed");

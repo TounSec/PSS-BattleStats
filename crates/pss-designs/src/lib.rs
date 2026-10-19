@@ -814,7 +814,7 @@ impl DesignsCache {
         // then overwrites the row via `upsert_calibrated_item_damage`'s ON CONFLICT. So an existing
         // cache's pre-migration rows are just left at the DEFAULT 0.0 shield_damage - an honest
         // "unknown, treated as 0" placeholder consistent with how this app already treats every
-        // other not-yet-calibrated damage value (see CLAUDE.md) - until the user recalibrates.
+        // other not-yet-calibrated damage value (see CLAUDE.md) - until the user recalibrates
         if let Err(err) = conn.execute(
             "ALTER TABLE calibrated_item_damage ADD COLUMN shield_damage REAL NOT NULL DEFAULT 0.0",
             [],
@@ -836,7 +836,7 @@ impl DesignsCache {
         // exactly what happened opening this repo's own pre-existing pss-designs-cache.db.
         // SQLite has no "ADD COLUMN IF NOT EXISTS", so the expected failure (column already
         // present, e.g. a fresh database that just created it above) is swallowed; anything else
-        // is a real problem and still surfaces.
+        // is a real problem and still surfaces
         if let Err(err) = conn.execute(
             "ALTER TABLE room_designs ADD COLUMN capacity INTEGER NOT NULL DEFAULT 0",
             [],
@@ -852,7 +852,7 @@ impl DesignsCache {
 
         // Same situation as `capacity` above: `shield_damage` was added to the nested
         // MissileDesign parsing after this cache shipped, so an existing database file needs the
-        // column added explicitly.
+        // column added explicitly
         if let Err(err) = conn.execute("ALTER TABLE room_designs ADD COLUMN shield_damage REAL", [])
         {
             let is_duplicate_column = matches!(
@@ -872,7 +872,7 @@ impl DesignsCache {
         // (i.e. an actual weapon room, not a room without a MissileDesign at all) still missing
         // shield_damage despite some existing - and force the next sync by forgetting the stored
         // version. Same logic covers the analogous `capacity` staleness this migration already
-        // had to detect (every Shield room still at the placeholder 0 default).
+        // had to detect (every Shield room still at the placeholder 0 default)
         let stale_shield_damage: bool = conn.query_row(
             "SELECT EXISTS (SELECT 1 FROM room_designs WHERE hull_damage IS NOT NULL)
                 AND NOT EXISTS (SELECT 1 FROM room_designs WHERE hull_damage IS NOT NULL AND shield_damage IS NOT NULL)",
@@ -897,7 +897,7 @@ impl DesignsCache {
         // `missile_designs` is fully DELETE+re-INSERTed on every sync (not a per-row UPDATE), so
         // existing rows won't naturally pick up these columns until the next real fetch - which,
         // same problem as above, `sync_missile_designs` only does when the live version differs
-        // from the stored one.
+        // from the stored one
         for (column, ddl) in [
             (
                 "ap_damage",
@@ -920,7 +920,7 @@ impl DesignsCache {
                 "ALTER TABLE missile_designs ADD COLUMN craft_damage REAL NOT NULL DEFAULT 0.0",
             ),
             // 0.0 = "never fetched": no real design has a Volley below 1, so it doubles as the
-            // staleness marker checked below.
+            // staleness marker checked below
             (
                 "volley",
                 "ALTER TABLE missile_designs ADD COLUMN volley REAL NOT NULL DEFAULT 0.0",
@@ -939,7 +939,7 @@ impl DesignsCache {
         }
         // Same dance for the training/progression columns on `character_designs`, added after
         // this cache shipped: `sync_character_designs` only re-fetches on a version change, so
-        // rows still carrying the '' placeholder force a resync by forgetting the stored version.
+        // rows still carrying the '' placeholder force a resync by forgetting the stored version
         for (column, ddl) in [
             (
                 "rarity",
@@ -958,7 +958,7 @@ impl DesignsCache {
                 "ALTER TABLE character_designs ADD COLUMN training_capacity INTEGER NOT NULL DEFAULT 0",
             ),
             // -1, not 0: a mask of 0 is a legitimate "no slots" value, so it can't double as the
-            // "never fetched" placeholder the staleness check below looks for.
+            // "never fetched" placeholder the staleness check below looks for
             (
                 "equipment_mask",
                 "ALTER TABLE character_designs ADD COLUMN equipment_mask INTEGER NOT NULL DEFAULT -1",
@@ -976,7 +976,7 @@ impl DesignsCache {
                 }
             }
         }
-        // Same for item_designs.rarity: '' marks a row synced before the column existed.
+        // Same for item_designs.rarity: '' marks a row synced before the column existed
         if let Err(err) = conn.execute(
             "ALTER TABLE item_designs ADD COLUMN rarity TEXT NOT NULL DEFAULT ''",
             [],
@@ -1614,7 +1614,7 @@ mod tests {
     use super::*;
 
     // Trimmed from a real RoomService/ListRoomDesigns2 response: one support room (no weapon) and
-    // one Laser room with a nested MissileDesign.
+    // one Laser room with a nested MissileDesign
     const SAMPLE_XML: &str = r#"<RoomService><ListRoomDesigns
   version="1312"><RoomDesigns>
           <RoomDesign RoomDesignId="1" RoomName="Bridge Lv1" RoomType="Bridge"
@@ -1626,7 +1626,7 @@ mod tests {
       </RoomDesigns></ListRoomDesigns></RoomService>"#;
 
     // Trimmed from a real ItemService/ListItemDesigns2 response: one missile ammo item and one
-    // equipped module.
+    // equipped module
     const SAMPLE_ITEM_XML: &str = r#"<ItemService><ListItemDesigns version="166567"><ItemDesigns>
         <ItemDesign ItemDesignId="4" ItemDesignName="Rocket" ItemType="Missile" ItemSubType="None" EnhancementType="None" EnhancementValue="0" ModuleType="None" ModuleArgument="0" MissileDesignId="2" CraftDesignId="0" Rarity="Common" />
         <ItemDesign ItemDesignId="139" ItemDesignName="Proximity Mine" ItemType="Equipment" ItemSubType="Module" EnhancementType="Attack" EnhancementValue="4" ModuleType="Trap" ModuleArgument="4" MissileDesignId="0" CraftDesignId="0" Rarity="Common" />
@@ -1634,7 +1634,7 @@ mod tests {
     </ItemDesigns></ListItemDesigns></ItemService>"#;
 
     // Trimmed from a real CharacterService/ListAllCharacterDesigns2 response, including the
-    // nested <CharacterParts> that we ignore.
+    // nested <CharacterParts> that we ignore
     const SAMPLE_CHARACTER_XML: &str = r#"<CharacterService><ListAllCharacterDesigns version="1356"><CharacterDesigns>
         <CharacterDesign CharacterDesignId="1" CharacterDesignName="Laura" Hp="2" FinalHp="6" Pilot="0" FinalPilot="18" Attack="1" FinalAttack="1.9" Repair="1" FinalRepair="1.7" Weapon="1" FinalWeapon="4" Science="1" FinalScience="7" Engine="1" FinalEngine="3" Research="1" FinalResearch="4" SpecialAbilityType="DeductReload" SpecialAbilityArgument="240" SpecialAbilityFinalArgument="460" Rarity="Special" ProgressionType="Linear" MaxCharacterLevel="40" TrainingCapacity="200" EquipmentMask="62"><CharacterParts><CharacterPart CharacterPartId="1" /></CharacterParts></CharacterDesign>
     </CharacterDesigns></ListAllCharacterDesigns></CharacterService>"#;
@@ -1646,13 +1646,13 @@ mod tests {
     // AP/explosion values are illustrative test data, not copied from the real Rocket/Interceptor
     // designs (both of which have DirectSystemDamage=0, ExplosionType=Single in a live capture) -
     // picked to exercise both fields being parsed and threaded through, not to model these two
-    // specific weapons accurately.
+    // specific weapons accurately
     const SAMPLE_MISSILE_XML: &str = r#"<RoomService><ListMissileDesigns version="796"><MissileDesigns>
         <MissileDesign MissileDesignId="2" MissileDesignName="Rocket" SystemDamage="1" HullDamage="0" CharacterDamage="1" ShieldDamage="5" DirectSystemDamage="1" ExplosionType="Single" ExplosionRadius="0" FireLength="0" CraftDamage="1" Volley="1" />
         <MissileDesign MissileDesignId="47" MissileDesignName="Interceptor Attack" SystemDamage="0.5" HullDamage="2" CharacterDamage="0.2" ShieldDamage="1" DirectSystemDamage="0" ExplosionType="RandomOnce" ExplosionRadius="150" FireLength="0" CraftDamage="0" Volley="3" />
     </MissileDesigns></ListMissileDesigns></RoomService>"#;
 
-    // Trimmed from a real RoomService/ListCraftDesigns response.
+    // Trimmed from a real RoomService/ListCraftDesigns response
     const SAMPLE_CRAFT_XML: &str = r#"<RoomService><ListCraftDesigns version="775"><CraftDesigns>
         <CraftDesign CraftDesignId="1" CraftName="Interceptor Lv1" MissileDesignId="47" />
     </CraftDesigns></ListCraftDesigns></RoomService>"#;
@@ -1689,7 +1689,7 @@ mod tests {
         cache.set_character_design_version(version).unwrap();
         assert!(!cache.has_invalidated_domains().unwrap());
 
-        // What the character_designs migration does to a pre-existing cache.
+        // What the character_designs migration does to a pre-existing cache
         cache
             .conn
             .execute(
@@ -1749,7 +1749,7 @@ mod tests {
         assert_eq!(mine.module_type, "Trap");
         assert_eq!(mine.enhancement_value, 4.0);
 
-        // Only crew-slot gear: the Module-subtyped mine is Equipment too, but never a crew slot.
+        // Only crew-slot gear: the Module-subtyped mine is Equipment too, but never a crew slot
         let equipment = cache.list_equipment_designs().unwrap();
         assert_eq!(equipment.len(), 1);
         assert_eq!(equipment[0].item_design_name, "Snow Launcher");
@@ -1803,7 +1803,7 @@ mod tests {
             })
             .unwrap();
 
-        // A later, larger calibration refines the estimate in place.
+        // A later, larger calibration refines the estimate in place
         cache
             .upsert_calibrated_item_damage(&CalibratedItemDamageRecord {
                 item_design_id: 23,
@@ -1909,7 +1909,7 @@ mod tests {
         cache.upsert_craft_designs(&craft_designs).unwrap();
 
         // The full real resolution chain: a Craft item's CraftDesignId -> CraftDesign's own
-        // MissileDesignId -> the MissileDesign that actually carries damage stats.
+        // MissileDesignId -> the MissileDesign that actually carries damage stats
         let missile_id = cache
             .get_craft_design_missile_id(1)
             .unwrap()

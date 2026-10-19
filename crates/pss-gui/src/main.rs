@@ -91,7 +91,7 @@ fn main() -> eframe::Result<()> {
     // `with_icon` alone has no effect on Wayland (winit/xdg-shell limitation): the compositor
     // sources the window/taskbar icon from a `.desktop` file matched by `app_id`, not from the
     // app at runtime. `with_app_id` must match the desktop file's basename
-    // (~/.local/share/applications/pss-battlestats.desktop) for that lookup to succeed.
+    // (~/.local/share/applications/pss-battlestats.desktop) for that lookup to succeed
     let mut viewport = egui::ViewportBuilder::default()
         .with_inner_size([1300.0, 850.0])
         .with_app_id("pss-battlestats");
@@ -110,7 +110,7 @@ fn main() -> eframe::Result<()> {
         options,
         Box::new(move |cc| {
             // Registers the HTTP+image-decode loaders behind `egui::Image::from_uri` - used to
-            // render Patch notes' UGC design thumbnails straight from their blog-hosted URLs.
+            // render Patch notes' UGC design thumbnails straight from their blog-hosted URLs
             egui_extras::install_image_loaders(&cc.egui_ctx);
             match PssGuiApp::new(log_buffer) {
                 Ok(app) => {
@@ -179,7 +179,7 @@ impl<S: tracing::Subscriber> tracing_subscriber::Layer<S> for GuiLogLayer {
         // ring buffer by noise the Journal never even displays (it's filtered at render time by
         // level, but was being counted against capacity at ingestion time). Our own crates' event
         // targets are always their crate name (module path defaults to it), so this keeps the
-        // buffer scoped to what the Journal is meant to show.
+        // buffer scoped to what the Journal is meant to show
         if !event.metadata().target().starts_with("pss_") {
             return;
         }
@@ -268,7 +268,7 @@ fn game_path_candidates() -> Vec<PathBuf> {
 
     #[cfg(target_os = "windows")]
     {
-        // Steam's default folder, then the usual extra library folders on each drive letter.
+        // Steam's default folder, then the usual extra library folders on each drive letter
         let mut roots: Vec<PathBuf> = Vec::new();
         for var in ["ProgramFiles(x86)", "ProgramFiles"] {
             if let Some(base) = std::env::var_os(var).map(PathBuf::from) {
@@ -313,7 +313,7 @@ fn find_game_executable(dir: &std::path::Path) -> Option<PathBuf> {
         .map(|e| e.path())
         .collect();
 
-    // `.exe` on Windows, `x86_64` on Linux, `.app` bundles on macOS.
+    // `.exe` on Windows, `x86_64` on Linux, `.app` bundles on macOS
     let is_runnable = |p: &PathBuf| {
         p.extension()
             .and_then(|e| e.to_str())
@@ -945,7 +945,7 @@ impl PssGuiApp {
             app.start_update_check();
         }
         if app.ca_setup == CaSetupState::Ready {
-            // The proxy must be listening before the game starts, or its first requests bypass it.
+            // The proxy must be listening before the game starts, or its first requests bypass it
             app.toggle_capture();
             app.launch_game();
         }
@@ -1172,7 +1172,7 @@ impl PssGuiApp {
                     // Each phase flips to InProgress/Done/Failed right before and after its own
                     // await, so the Designs tab's three rows update live as the sequence runs
                     // instead of jumping from "nothing happened" straight to a single final
-                    // combined message once all three calls have returned.
+                    // combined message once all three calls have returned
                     let rooms = pss_designs::sync_room_designs(&mut designs, &http).await;
                     state.lock().unwrap().room = if rooms.is_ok() { SyncPhase::Done } else { SyncPhase::Failed };
                     let rooms = rooms?;
@@ -1369,7 +1369,7 @@ impl PssGuiApp {
     /// Starts the game with its HTTP(S) traffic routed through the capture proxy.
     fn launch_game(&mut self) {
         if let Some(child) = self.game_process.as_mut() {
-            // Already running: don't start a second instance.
+            // Already running: don't start a second instance
             if matches!(child.try_wait(), Ok(None)) {
                 return;
             }
@@ -1385,7 +1385,7 @@ impl PssGuiApp {
         };
 
         // Launched outside Steam, the Steamworks SDK needs this file next to the executable to
-        // know which app it is; without it the game refuses to start.
+        // know which app it is; without it the game refuses to start
         if let Some(dir) = path.parent() {
             let appid_file = dir.join("steam_appid.txt");
             if !appid_file.exists()
@@ -1580,7 +1580,7 @@ impl eframe::App for PssGuiApp {
             drop(guard);
             if syncing_now {
                 // Keeps this status pill (and the Designs tab's progress rows) animating without
-                // user input - eframe doesn't repaint on a timer by default, only on OS events.
+                // user input - eframe doesn't repaint on a timer by default, only on OS events
                 ui.ctx().request_repaint();
             }
             if self.designs_syncing && !syncing_now {
@@ -1724,7 +1724,7 @@ impl eframe::App for PssGuiApp {
             self.appearance_window.open(&self.appearance);
         }
         if do_quit {
-            // `Close` rather than `process::exit` so `Drop` runs and stops the launched game.
+            // `Close` rather than `process::exit` so `Drop` runs and stops the launched game
             ctx.send_viewport_cmd(egui::ViewportCommand::Close);
         }
 
@@ -1732,7 +1732,7 @@ impl eframe::App for PssGuiApp {
             ui.horizontal(|ui| {
                 let capturing = self.capture_handle.is_some();
                 // Painted dot, not "●" - same reason as the battle-list marker (see below): the
-                // bundled egui font doesn't reliably include it, which showed up as a tofu box.
+                // bundled egui font doesn't reliably include it, which showed up as a tofu box
                 let (dot_rect, _) =
                     ui.allocate_exact_size(egui::vec2(10.0, 10.0), egui::Sense::hover());
                 ui.painter().circle_filled(
@@ -1965,7 +1965,7 @@ impl PssGuiApp {
                     // bailing out early with HP to spare - both surrender cases come back as a
                     // plain win/loss. Red/green are reserved for an actual destruction; either
                     // side's surrender reads as orange, same severity as a draw/retreat/other
-                    // non-terminal outcome (the `_` arm below).
+                    // non-terminal outcome (the `_` arm below)
                     let color = match battle.battle_outcome {
                         OutcomeType::AttackerWon if battle.defending_ship_surrendered => {
                             palette::WARN
@@ -1990,7 +1990,7 @@ impl PssGuiApp {
 
                     ui.horizontal(|ui| {
                         // A painted rect instead of a Unicode block glyph: the bundled egui font
-                        // doesn't reliably include "▍", which showed up as an empty tofu box.
+                        // doesn't reliably include "▍", which showed up as an empty tofu box
                         let (rect, _) =
                             ui.allocate_exact_size(egui::vec2(4.0, 34.0), egui::Sense::hover());
                         ui.painter().rect_filled(rect, 0.0, color);
@@ -2039,7 +2039,7 @@ impl PssGuiApp {
         // Sum of every damage type the report distinguishes (hull/system/character/AP/craft from
         // MissileDesign, shield from MissileDesign.ShieldDamage, fire from FireLength) - NOT
         // hull-only, see the card title below. Each type's own number is broken out per-room in
-        // the table further down.
+        // the table further down
         let total_dealt = detail.attacker.stats.damage.total_damage();
         let hull_taken_pct = if detail.defender.max_hp > 0.0 {
             (detail.defender.max_hp - detail.defender.hull_remaining) / detail.defender.max_hp
@@ -2138,7 +2138,7 @@ impl PssGuiApp {
 
         // Full-width, always-visible tables below the summary cards — not nested tiny
         // accordions inside each side's column, so they can't be missed or get an ID collision
-        // between the two sides.
+        // between the two sides
         ui.add_space(12.0);
         ui.separator();
         let duration_secs = detail.last_frame as f64 / self.fps;
@@ -2233,7 +2233,7 @@ impl PssGuiApp {
                 // Defender heading gets a red tint in the mockup; attacker stays plain - this is
                 // the "you vs. them" framing, not a win/loss judgement (a losing attacker's own
                 // panel is still shown plain, its destroyed/surrendered status is the "Issue" row
-                // below instead).
+                // below instead)
                 let heading = if side.is_attacker {
                     tr!("side.you", label = side.label())
                 } else {
@@ -2305,7 +2305,7 @@ impl PssGuiApp {
             // shield_damage_taken is a cumulative battle-long total that can exceed it many times
             // over as the shield recharges mid-fight (see SideDetail::shield_capacity doc). The
             // bar shows the generator's capacity as a flat reference stat - full/blue while any
-            // shield room survives, empty/red once they're all destroyed - not a depletion level.
+            // shield room survives, empty/red once they're all destroyed - not a depletion level
             ui.label(tr!("side.shield"));
             let shield_color = if side.shield_capacity <= 0.0 {
                 palette::BAD
@@ -2445,7 +2445,7 @@ impl PssGuiApp {
             // Dedup via a HashSet, not `Vec::dedup()`: that only collapses *adjacent* duplicates,
             // but flat_map interleaves types battle by battle (e.g. Android from battle #1 then
             // AntiCraft from #2 then Android again from #4 - never adjacent), so `dedup()` left
-            // real duplicate legend entries showing side by side.
+            // real duplicate legend entries showing side by side
             let unique_types: HashSet<RoomType> = recent_dps
                 .iter()
                 .flat_map(|entry| entry.dps_by_type.keys().copied())
@@ -2463,7 +2463,7 @@ impl PssGuiApp {
         });
         // One group per battle (oldest to newest, left to right), one bar per weapon type that
         // battle used - unlike the previous single all-time-average bar per type, this shows how
-        // DPS trends battle to battle, matching docs/Ui's grouped view.
+        // DPS trends battle to battle, matching docs/Ui's grouped view
         let groups: Vec<(String, Vec<(f32, egui::Color32)>)> = recent_dps
             .iter()
             .rev()
@@ -2638,7 +2638,7 @@ impl PssGuiApp {
                 ui.label("FRAMES_PER_SECOND");
                 // Not a free-form value - the PSS client itself only ever runs its simulation at
                 // one of these two rates (see the game's own "Target FPS" setting), so a
-                // continuous slider offered a false sense of precision.
+                // continuous slider offered a false sense of precision
                 ui.selectable_value(&mut self.fps, 30.0, "30");
                 ui.selectable_value(&mut self.fps, 60.0, "60");
                 ui.label(tr!("designs.source"));
@@ -3269,7 +3269,7 @@ fn draw_multi_bar_groups(
     let text_color = ui.visuals().text_color();
 
     // Top margin leaves room for each bar's value label without clipping the tallest bar;
-    // bottom margin is the x-axis (group) labels.
+    // bottom margin is the x-axis (group) labels
     let plot_rect = egui::Rect::from_min_max(
         egui::pos2(rect.left(), rect.top() + 14.0),
         egui::pos2(rect.right(), rect.bottom() - 18.0),
@@ -3639,7 +3639,7 @@ fn render_crew_table(
                         // an overkill hit (>=100%) is red, a heavy but survivable hit is orange,
                         // and anything lighter stays neutral grey. Thresholds are a reasonable
                         // read of the mockup's sample values (106% red, 79.6% orange, 38.7% grey),
-                        // not a value pulled from game data - tune if that reading turns out wrong.
+                        // not a value pulled from game data - tune if that reading turns out wrong
                         let pct_color = if pct >= 100.0 {
                             palette::BAD
                         } else if pct >= 50.0 {
@@ -3670,7 +3670,7 @@ fn render_crew_table(
                     ui.spacing_mut().item_spacing.x = 4.0;
                     ui.label(special_ability_display_name(crew.special_ability_type));
                     // No "✓"/"✗" - same missing-glyph issue as the status dot and sort arrows.
-                    // The word alone plus color already carries the distinction.
+                    // The word alone plus color already carries the distinction
                     if crew.ability_triggered {
                         ui.colored_label(palette::GOOD, tr!("table.used"));
                     } else {
@@ -3947,7 +3947,7 @@ mod tests {
     fn strips_and_parses_room_design_level_suffix() {
         assert_eq!(strip_level_suffix("Bolter Lv10"), "Bolter");
         assert_eq!(strip_level_suffix("Small Reactor Lv2"), "Small Reactor");
-        // " Lv" not followed by digits isn't a level suffix - left untouched, not truncated.
+        // " Lv" not followed by digits isn't a level suffix - left untouched, not truncated
         assert_eq!(strip_level_suffix("Object Lvl5"), "Object Lvl5");
         assert_eq!(strip_level_suffix("No Suffix Here"), "No Suffix Here");
 

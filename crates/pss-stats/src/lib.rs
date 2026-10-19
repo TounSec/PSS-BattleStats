@@ -12,9 +12,7 @@ use std::collections::HashMap;
 
 use anyhow::Result;
 use pss_designs::DesignsCache;
-use pss_model::{
-    CategoryType, CraftReport, ItemType, RoomReport, RoomType, ShipReport, SpecialAbilityType,
-};
+use pss_model::{CategoryType, ItemType, RoomReport, RoomType, ShipReport, SpecialAbilityType};
 use pss_store::StoredBattle;
 
 /// Client tick rate, sourced from community reverse-engineering (PSSCombat, HerzbubeWiki: "the
@@ -364,11 +362,11 @@ pub fn item_weapon_stats(ship: &ShipReport, cache: &DesignsCache) -> Vec<ItemWea
         let quantity = item.quantity_deployed as f64;
         let (projectiles, shield_hit_projectiles) = match item.item_type {
             ItemType::Missile => {
-                // Missiles bypass shields (see doc above) whatever the raw design field says.
+                // Missiles bypass shields (see doc above) whatever the raw design field says
                 damage.shield = 0.0;
                 (quantity * volley, 0.0)
             }
-            // Filled in below, once every craft row is known.
+            // Filled in below, once every craft row is known
             _ => (0.0, 0.0),
         };
 
@@ -386,7 +384,7 @@ pub fn item_weapon_stats(ship: &ShipReport, cache: &DesignsCache) -> Vec<ItemWea
         });
     }
 
-    // Craft: share the ship's real attack / shield-hit counts between the craft rows.
+    // Craft: share the ship's real attack / shield-hit counts between the craft rows
     let craft_deployed: i32 = stats
         .iter()
         .filter(|r| r.item_type == ItemType::Craft)
@@ -395,7 +393,7 @@ pub fn item_weapon_stats(ship: &ShipReport, cache: &DesignsCache) -> Vec<ItemWea
     if craft_deployed > 0 {
         let attacks: i32 = ship.craft_reports.values().map(|c| c.attacks).sum();
         // Craft projectiles are the ones not tied to any room. With no projectile inventory at all
-        // (older payloads) there's nothing to count, so assume every attack hit the shield.
+        // (older payloads) there's nothing to count, so assume every attack hit the shield
         let shield_hits = if ship.missile_reports.is_empty() {
             attacks as f64
         } else {
@@ -443,7 +441,7 @@ pub fn estimate_ship_damage(ship: &ShipReport, cache: &DesignsCache) -> Result<S
     let mut estimate = ShipDamageEstimate::default();
 
     // Real per-room Carrier shot count - see `estimate_room_damage`'s `shots_override` doc comment
-    // for why `RoomReport.activations` can't be used here.
+    // for why `RoomReport.activations` can't be used here
     let mut craft_attacks_by_room: HashMap<i32, i32> = HashMap::new();
     for craft in ship.craft_reports.values() {
         *craft_attacks_by_room
@@ -519,7 +517,7 @@ pub fn estimate_ship_damage(ship: &ShipReport, cache: &DesignsCache) -> Result<S
     // the room table a plausible number instead of a flatly wrong one, and (b) makes every
     // *per-room-type* aggregation (Historique's chart, `weapon_type_history`,
     // `damage_by_room_type` - anything that sums RoomWeaponStats grouped by RoomType, which all
-    // only ever see `estimate.rooms`, never `estimate.total_*`) add back up to the correct total.
+    // only ever see `estimate.rooms`, never `estimate.total_*`) add back up to the correct total
     for (room_type, damage) in [
         (RoomType::Missile, missile_damage),
         (RoomType::Carrier, craft_damage),
@@ -1194,7 +1192,7 @@ pub fn weapon_type_history(
 
         // Only the attacker is "you" (see BattleStore::win_rate_by_attacking_ship's doc
         // comment) - the defender is always some opponent whose loadout shouldn't blend
-        // into your own DPS.
+        // into your own DPS
         let ship = &report.attacking_ship_report;
         let estimate = estimate_ship_damage(ship, cache)?;
         let mut per_type_damage: HashMap<RoomType, f64> = HashMap::new();
@@ -1463,7 +1461,7 @@ mod tests {
     fn estimate_ship_damage_sums_ap_damage_from_missile_items() {
         // AP Damage (DirectSystemDamage) is a distinct mechanic from regular System Damage - see
         // CLAUDE.md and MissileDesignFullXml's doc comment - it must flow through as its own
-        // total, not get folded into `total_system_damage`.
+        // total, not get folded into `total_system_damage`
         use pss_designs::{ItemDesignXml, MissileDesignFullXml};
         use pss_model::ItemReport;
 
@@ -1528,7 +1526,7 @@ mod tests {
 
         // Item #99 is Missile ammo referencing MissileDesignId=5 - deliberately absent from
         // SAMPLE_DESIGNS_XML's rooms, since a Missile room never has one of its own (see
-        // pss-designs module docs).
+        // pss-designs module docs)
         cache
             .upsert_item_designs(&[ItemDesignXml {
                 item_design_id: 99,
@@ -1546,7 +1544,7 @@ mod tests {
             .unwrap();
 
         // Real stats: hull=100 per shot - a value nothing else in this test could produce, so
-        // seeing it in the result proves this path was actually used.
+        // seeing it in the result proves this path was actually used
         cache
             .upsert_missile_designs(&[MissileDesignFullXml {
                 missile_design_id: 5,
@@ -1564,7 +1562,7 @@ mod tests {
             }])
             .unwrap();
 
-        // A stale/wrong calibration for the same item - if this wins instead, the test fails.
+        // A stale/wrong calibration for the same item - if this wins instead, the test fails
         cache
             .upsert_calibrated_item_damage(&CalibratedItemDamageRecord {
                 item_design_id: 99,
@@ -1606,7 +1604,7 @@ mod tests {
         // deploying several different Missile item designs at once, which made
         // `find_ship_item_design` return None (ambiguous) and the whole Missile contribution
         // silently come out as 0 - even though we have real per-item damage for every one of them.
-        // `estimate_ship_damage` must not depend on "exactly one Missile item type" at all.
+        // `estimate_ship_damage` must not depend on "exactly one Missile item type" at all
         use pss_designs::{ItemDesignXml, MissileDesignFullXml};
         use pss_model::ItemReport;
 
@@ -1677,7 +1675,7 @@ mod tests {
             .unwrap();
 
         // No Missile rooms at all here on purpose - proves the ship-wide total doesn't depend on
-        // room shots_fired for Missile, only on item consumption.
+        // room shots_fired for Missile, only on item consumption
         let mut ship = full_ship_report(StdHashMap::new());
         ship.item_reports.insert(
             1,
@@ -1710,7 +1708,7 @@ mod tests {
         assert_eq!(estimate.total_character_damage, 2.0); // 2 Scarlet * 1
         assert_eq!(estimate.total_craft_damage, 7.0); // 6*1.0 + 2*0.5
         // Missile ammo never deals real shield damage (see WeaponDamage's doc comment) even
-        // though both designs carry a nonzero ShieldDamage field in the cache.
+        // though both designs carry a nonzero ShieldDamage field in the cache
         assert_eq!(estimate.total_shield_damage, 0.0);
     }
 
@@ -1784,7 +1782,7 @@ mod tests {
         // Regression test: real captures in this project's own store show a ship deploying
         // several distinct Craft item designs at once is the *common* case (16 of ~60
         // ship-appearances), not an edge case - the old `find_ship_item_design`-gated
-        // `resolve_craft_damage` made every one of those silently report 0 Craft damage.
+        // `resolve_craft_damage` made every one of those silently report 0 Craft damage
         use pss_designs::{CraftDesignXml, ItemDesignXml, MissileDesignFullXml};
         use pss_model::ItemReport;
 
@@ -1866,7 +1864,7 @@ mod tests {
             .unwrap();
 
         // No Carrier rooms at all here on purpose - proves the ship-wide total doesn't depend on
-        // room activity at all, only on item consumption, same as Missile above.
+        // room activity at all, only on item consumption, same as Missile above
         let mut ship = full_ship_report(StdHashMap::new());
         ship.item_reports.insert(
             1,
@@ -1895,7 +1893,7 @@ mod tests {
 
         // 5 drones deployed (3 Interceptor + 2 Firehawk) that made 10 attacks in total: the damage
         // follows the ATTACKS (the projectile count), shared between the craft rows by deployed
-        // quantity - not the 5 deployed drones.
+        // quantity - not the 5 deployed drones
         for id in 1..=5 {
             ship.craft_reports.insert(id, craft_report(2, 99));
         }
@@ -1904,7 +1902,7 @@ mod tests {
         assert_eq!(estimate.total_system_damage, 12.0); // 10 attacks * 3/5 = 6 Interceptor shots * 2
         // Unlike Missile ammo, Craft's ShieldDamage is NOT forced to 0 - no equivalent real-panel
         // counter-evidence exists for drones (see WeaponDamage's doc comment). No projectile
-        // inventory in this fixture, so every attack is assumed to have hit the shield.
+        // inventory in this fixture, so every attack is assumed to have hit the shield
         assert_eq!(estimate.total_shield_damage, 12.0); // 10 attacks * 2/5 = 4 Firehawk shots * 3
 
         let mut items = item_weapon_stats(&ship, &cache);
@@ -1925,7 +1923,7 @@ mod tests {
         // "Bombshell Strike" (a real Craft missile design) is both AP damage AND an AOE weapon
         // (DirectSystemDamage=1.5, ExplosionType=Radius, ExplosionRadius=200 in a live capture) -
         // both must show up as their own fields on the same row, and the AOE radius must not
-        // change the computed `damage` total (see `ItemWeaponStats::explosion_type` doc comment).
+        // change the computed `damage` total (see `ItemWeaponStats::explosion_type` doc comment)
         use pss_designs::{CraftDesignXml, ItemDesignXml, MissileDesignFullXml};
         use pss_model::ItemReport;
 
@@ -1982,7 +1980,7 @@ mod tests {
             },
         );
 
-        // 2 Bombshells that made 4 attacks in total.
+        // 2 Bombshells that made 4 attacks in total
         ship.craft_reports.insert(1, craft_report(2, 99));
         ship.craft_reports.insert(2, craft_report(2, 99));
 
@@ -1995,7 +1993,7 @@ mod tests {
         assert_eq!(items[0].damage.system, 1.0);
         assert_eq!(items[0].damage.character, 3.0);
 
-        // Ship-wide total is still just projectiles * per-projectile damage - AOE never inflates it.
+        // Ship-wide total is still just projectiles * per-projectile damage - AOE never inflates it
         let estimate = estimate_ship_damage(&ship, &cache).expect("Estimate should succeed");
         assert_eq!(estimate.total_ap_damage, 6.0); // 4 * 1.5
         assert_eq!(estimate.total_character_damage, 12.0); // 4 * 3.0
@@ -2006,7 +2004,7 @@ mod tests {
         // Regression test: real live-API value for "Scarlet Level 3" is FireLength=400 (verified
         // against RoomService/ListMissileDesigns this session). 10 ticks (400/40), remaining
         // duration per tick 400,360,...,40 - sum = 2200 frames total across the burn.
-        // AP = 2200/500 = 4.4, Crew = 2200/200 = 11.0.
+        // AP = 2200/500 = 4.4, Crew = 2200/200 = 11.0
         let (ap, character) = fire_damage_over_burn(400.0);
         assert_eq!(ap, 4.4);
         assert_eq!(character, 11.0);
@@ -2030,7 +2028,7 @@ mod tests {
         // Attack", combine large instant damage with a nonzero FireLength too); (2) Missile ammo's
         // `ShieldDamage` must never be counted as real damage, and the real `CraftDamage` field
         // must be. Both `item_weapon_stats` (per-item breakdown) and `estimate_ship_damage`
-        // (ship-wide + per-room totals) must reflect all of this identically.
+        // (ship-wide + per-room totals) must reflect all of this identically
         use pss_designs::{ItemDesignXml, MissileDesignFullXml};
         use pss_model::ItemReport;
 
@@ -2051,7 +2049,7 @@ mod tests {
             }])
             .unwrap();
         // Real live-API values for MissileDesignId=23 ("Scarlet Level 4") - matches the screenshot
-        // exactly: System=0, AP(DirectSystemDamage)=0.1, Crew=0, Craft=1, FireLength=440 (11.0s).
+        // exactly: System=0, AP(DirectSystemDamage)=0.1, Crew=0, Craft=1, FireLength=440 (11.0s)
         cache
             .upsert_missile_designs(&[MissileDesignFullXml {
                 missile_design_id: 23,
@@ -2113,7 +2111,7 @@ mod tests {
         // comment), so redistributing by it would give each room the wrong share. This sets up
         // two Carrier rooms whose `activations` values would give the *opposite* share ordering
         // from their real `CraftReport.attacks` totals, so a bug reusing `activations` here would
-        // fail this test's exact numbers rather than just being slightly off.
+        // fail this test's exact numbers rather than just being slightly off
         use pss_designs::{CraftDesignXml, ItemDesignXml, MissileDesignFullXml};
         use pss_model::ItemReport;
 
@@ -2158,7 +2156,7 @@ mod tests {
 
         // Room 1: high activations (5), low real attacks (1). Room 2: low activations (1), high
         // real attacks (9). A bug using `activations` would give room 1 the larger share (5/6);
-        // using `attacks` correctly gives room 2 the larger share (9/10).
+        // using `attacks` correctly gives room 2 the larger share (9/10)
         let mut room_reports = StdHashMap::new();
         room_reports.insert(1, carrier_room_report(1, 5));
         room_reports.insert(2, carrier_room_report(2, 1));
@@ -2197,7 +2195,7 @@ mod tests {
         // summing `estimate.rooms`, never `estimate.total_*` - so fixing only the ship-wide total
         // (as the first version of this fix did) left every one of those views still reporting
         // Missile as 0, which is what was actually visible to a user. Each Missile room must carry
-        // a share of the real total so grouping by RoomType recovers the correct number too.
+        // a share of the real total so grouping by RoomType recovers the correct number too
         use pss_designs::{ItemDesignXml, MissileDesignFullXml};
         use pss_model::ItemReport;
 
@@ -2234,7 +2232,7 @@ mod tests {
             }])
             .unwrap();
 
-        // Two Missile rooms, 3:1 shot split - room A should get 75% of the total, room B 25%.
+        // Two Missile rooms, 3:1 shot split - room A should get 75% of the total, room B 25%
         let mut room_a = laser_room_report(3);
         room_a.room_id = 1;
         room_a.room_type = RoomType::Missile;
@@ -2276,7 +2274,7 @@ mod tests {
         assert_eq!(room_b_stats.estimated_hull_damage, 10.0); // 1/4 share of 40
 
         // Grouping by RoomType (what Historique/history/the room table actually do) must recover
-        // the exact ship-wide total, not 0.
+        // the exact ship-wide total, not 0
         let by_type = damage_by_room_type(&estimate);
         assert_eq!(by_type[&RoomType::Missile], 40.0);
     }
@@ -2469,7 +2467,7 @@ mod tests {
     fn missile_items_fire_quantity_times_volley_projectiles() {
         // Real capture (battle #27): 15 Rocket + 10 Scarlet + 8 "Rocket Barrage" (Volley 10) made the
         // ship's Missile rooms report 105 projectiles = 15 + 10 + 8 * 10, not 33 launches. The
-        // damage fields are per projectile, so a Barrage launch deals ten times its listed damage.
+        // damage fields are per projectile, so a Barrage launch deals ten times its listed damage
         let mut cache = cache_with_sample_designs();
         cache
             .upsert_item_designs(&[
@@ -2499,7 +2497,7 @@ mod tests {
 
         let estimate = estimate_ship_damage(&ship, &cache).expect("Estimate should succeed");
         assert!((estimate.total_system_damage - (15.0 * 1.0 + 80.0 * 1.3)).abs() < 1e-9);
-        // Missiles never hit a shield, whatever the raw ShieldDamage field says.
+        // Missiles never hit a shield, whatever the raw ShieldDamage field says
         assert_eq!(estimate.total_shield_damage, 0.0);
     }
 
@@ -2508,7 +2506,7 @@ mod tests {
         // Real captures: counting ShieldDamage for every shot overshot the observed shield damage
         // ~5x; counting only the projectiles tagged `hit_shield` for the room matched it (1.05).
         // System damage still counts every shot (it matched the observed room damage as is).
-        // The sample Laser design (id 6) deals system 2 / shield 0.5 per shot.
+        // The sample Laser design (id 6) deals system 2 / shield 0.5 per shot
         let mut ship = full_ship_report({
             let mut rooms = StdHashMap::new();
             rooms.insert(1, laser_room_report(4));
@@ -2533,7 +2531,7 @@ mod tests {
         assert_eq!(estimate.rooms[0].estimated_shield_damage, 0.5);
 
         // Without any projectile inventory there is nothing to weight by: every shot is assumed to
-        // hit the shield (the pre-existing behaviour) instead of silently reporting 0.
+        // hit the shield (the pre-existing behaviour) instead of silently reporting 0
         ship.missile_reports.clear();
         let estimate = estimate_ship_damage(&ship, &cache_with_sample_designs())
             .expect("Estimate should succeed");
@@ -2543,7 +2541,7 @@ mod tests {
     #[test]
     fn craft_shield_damage_counts_only_craft_projectiles_that_hit_the_shield() {
         // Craft projectiles are the ones with no matching room (`original_room_id` 0 in real
-        // captures); their count equals the craft attacks exactly.
+        // captures); their count equals the craft attacks exactly
         use pss_designs::CraftDesignXml;
         let mut cache = cache_with_sample_designs();
         cache
@@ -2586,7 +2584,7 @@ mod tests {
     #[test]
     fn healing_is_not_negative_damage() {
         // The Repair Drone's "Repair Beam" has SystemDamage = -0.1 in the live API. Left negative it
-        // subtracted from the totals (`Carrier: -4.0 total damage`); a heal isn't damage.
+        // subtracted from the totals (`Carrier: -4.0 total damage`); a heal isn't damage
         use pss_designs::CraftDesignXml;
         let mut cache = cache_with_sample_designs();
         cache

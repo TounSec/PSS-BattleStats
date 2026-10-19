@@ -94,9 +94,9 @@ pub async fn fetch_character_prestiges(
 mod tests {
     use super::*;
 
-    // Trimmed from a live PrestigeCharacterFrom?characterDesignId=583 (Neptune Mariner) response.
+    // Trimmed from a live PrestigeCharacterFrom?characterDesignId=583 (Neptune Mariner) response
     const SAMPLE_FROM_XML: &str = r#"<CharacterService><PrestigeCharacterFrom timestamp="2026-09-28T12:04:10"><Prestiges><Prestige CharacterDesignId1="583" CharacterDesignId2="7" ToCharacterDesignId="350" /><Prestige CharacterDesignId1="583" CharacterDesignId2="10" ToCharacterDesignId="436" /></Prestiges></PrestigeCharacterFrom></CharacterService>"#;
-    // Live PrestigeCharacterTo?characterDesignId=583 - no recipe produces Neptune Mariner.
+    // Live PrestigeCharacterTo?characterDesignId=583 - no recipe produces Neptune Mariner
     const SAMPLE_EMPTY_TO_XML: &str = r#"<CharacterService><PrestigeCharacterTo timestamp="2026-09-28T12:04:10"><Prestiges></Prestiges></PrestigeCharacterTo></CharacterService>"#;
 
     #[test]

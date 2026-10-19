@@ -189,7 +189,7 @@ pub fn render(ui: &mut egui::Ui, tab: &mut CrewTab) {
     }
 
     // Placeholder rows left by a schema migration until the next designs sync (see
-    // `DesignsCache::has_invalidated_domains`) - slots/training capacity would read as zero.
+    // `DesignsCache::has_invalidated_domains`) - slots/training capacity would read as zero
     if tab
         .characters
         .iter()
@@ -815,7 +815,7 @@ fn render_prestige(ui: &mut egui::Ui, tab: &mut CrewTab) {
         .iter()
         .map(|m| m.character_design_id)
         .collect();
-    // Ingredients already in the roster are highlighted - they're fusions you can do right away.
+    // Ingredients already in the roster are highlighted - they're fusions you can do right away
     let chip = |ui: &mut egui::Ui, id: i32| {
         let text = egui::RichText::new(name(id));
         if roster.contains(&id) {

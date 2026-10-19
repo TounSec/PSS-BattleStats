@@ -97,7 +97,7 @@ impl BalanceChange {
 
 fn parse_balance_change(text: &str) -> Option<BalanceChange> {
     // Ordered most-specific-first; the first pattern that matches wins. Real phrasing varies too
-    // much to catch with one regex - see module docs.
+    // much to catch with one regex - see module docs
     static FROM_TO: std::sync::OnceLock<Regex> = std::sync::OnceLock::new();
     static TO_ONLY: std::sync::OnceLock<Regex> = std::sync::OnceLock::new();
     static NOW_HAS_VALUE_UNIT: std::sync::OnceLock<Regex> = std::sync::OnceLock::new();
@@ -390,7 +390,7 @@ fn parse_ugc_designs(section_html: &str) -> Vec<UgcDesign> {
                 UgcKind::Skin
             };
             // Cosmetic only: "Miru Sticker" -> "Miru" - the "Sticker" suffix is what `kind`
-            // detection above keys on, but it's redundant once the kind is already a badge/label.
+            // detection above keys on, but it's redundant once the kind is already a badge/label
             let name = if kind == UgcKind::Sticker {
                 raw_name
                     .split_whitespace()
@@ -503,7 +503,7 @@ pub async fn fetch_patch_notes(http: &reqwest::Client) -> Result<Vec<PatchNoteVe
         }
         // Once a whole feed page contains no patch-notes-titled post at all, older pages are
         // overwhelmingly likely to be even less relevant (other blog content) - stop early rather
-        // than paging back through the entire blog history on every refresh.
+        // than paging back through the entire blog history on every refresh
         if !found_any_patch_note && page > 1 {
             break;
         }
@@ -629,7 +629,7 @@ mod tests {
 
     // Trimmed from a real blog.pixelstarships.com/feed/ response (one <item>, content_html cut
     // down to the two sections this module actually reads - UGC credits/images and one
-    // "Changelogs:" list - full real post had 83 list items and 15 UGC designs).
+    // "Changelogs:" list - full real post had 83 list items and 15 UGC designs)
     const SAMPLE_FEED_XML: &str = r#"<?xml version="1.0" encoding="UTF-8"?><rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><item>
 <title>Galaxy Patch Notes V0.999.60</title>
 <link>https://blog.pixelstarships.com/2026/08/17/galaxy-patch-notes-v0-999-60/</link>
@@ -686,7 +686,7 @@ mod tests {
         assert_eq!(versions.len(), 2);
         assert_eq!(versions[0].version, "V0.999.60");
         assert_eq!(versions[1].version, "V0.999.58");
-        // Both sections share the same post-level UGC list.
+        // Both sections share the same post-level UGC list
         assert_eq!(versions[0].ugc_designs.len(), 3);
         assert_eq!(versions[1].ugc_designs.len(), 3);
         assert_eq!(versions[0].published_at, "2026-08-17");
@@ -843,7 +843,7 @@ mod tests {
         // A real, unedited blog.pixelstarships.com/feed/ <item> for the same V0.999.60 post used
         // as the basis for SAMPLE_FEED_XML above, but untrimmed - full 83-entry changelog, real
         // CJK/emoji creator names, real apostrophes/dashes as WordPress actually emits them. This
-        // is what proves the regexes survive real messy data, not just the clean synthetic sample.
+        // is what proves the regexes survive real messy data, not just the clean synthetic sample
         let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("../../docs/blog_patch_notes_v0_999_60.xml");
         let xml = std::fs::read_to_string(&path).expect("Failed to read real feed fixture");
@@ -865,7 +865,7 @@ mod tests {
         assert_eq!(versions[1].version, "V0.999.58");
 
         // 15 real UGC designs (9 skins + 6 stickers) - every one must have resolved a name,
-        // creator, and image url; no silent gaps from the unicode-heavy creator names.
+        // creator, and image url; no silent gaps from the unicode-heavy creator names
         assert_eq!(versions[0].ugc_designs.len(), 15);
         for design in &versions[0].ugc_designs {
             assert!(!design.name.is_empty());
@@ -890,7 +890,7 @@ mod tests {
         );
 
         // Real post has 83 flat list items under "V0.999.60 Changelogs:" - every one must
-        // classify into some bucket and end up with non-empty, tag-free text.
+        // classify into some bucket and end up with non-empty, tag-free text
         assert_eq!(versions[0].entries.len(), 83);
         for entry in &versions[0].entries {
             assert!(!entry.text.is_empty());
@@ -900,7 +900,7 @@ mod tests {
         assert!(versions[0].count(ChangelogCategory::Balance) >= 40);
 
         // Structured (subject/before/after) parsing should cover the vast majority of real
-        // Balance-classified entries, not just the clean synthetic sample - 47/48 on this post.
+        // Balance-classified entries, not just the clean synthetic sample - 47/48 on this post
         let balance_entries: Vec<&ChangelogEntry> = versions[0]
             .entries
             .iter()
