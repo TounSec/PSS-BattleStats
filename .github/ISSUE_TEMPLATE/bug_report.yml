@@ -1,0 +1,81 @@
+name: Bug Report
+description: Something doesn't work as expected
+title: "[Bug] "
+type: Bug,
+labels: ["bug"]
+assignees: ["TounSec"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this. The more precise you are, the faster it gets fixed. **Never paste access tokens, passwords or your CA private key** (`pss-capture-ca-key.pem`).
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What you saw, and what you expected to see instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the "Battles" tab
+        2. Click on ...
+        3. See the error
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: PSS-BattleStats version
+      description: As shown by the installer, or the Cargo.toml / release tag (e.g. 0.1.1-beta.1).
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows 11
+        - Windows 10
+        - Linux
+        - macOS
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: How did you install it?
+      options:
+        - MSI installer (Windows)
+        - Built from source
+        - Other
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part is affected?
+      multiple: true
+      options:
+        - Capture / proxy / certificate
+        - Game launch
+        - Battles / History
+        - Crew
+        - Designs / Patch notes
+        - Statistics
+        - Appearance / language
+        - Updates / installer
+        - Other
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Copy the relevant lines from the "Journal" tab, or the terminal output.
+      render: shell
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots or additional context
+      description: Drag and drop images here.

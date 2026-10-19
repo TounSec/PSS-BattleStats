@@ -1,3 +1,5 @@
 /target
-Cargo.lock
-/Research
+/docs
+/installer/
+PSS-BattleStats.wixpdb
+PSS-BattleStats.msi

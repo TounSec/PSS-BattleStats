@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+  WiX v4+ source for the PSS-BattleStats installer (untested on Windows yet).
+
+  Build (Windows):
+    cargo build, with the "dist" profile (profile flag omitted here: XML comments cannot contain two dashes)
+    wix build installer/main.wxs -d Version=<X.Y.Z> -o PSS-BattleStats-<version>.msi
+  (CI does this on a version tag, see .github/workflows/release.yml.)
+
+  Rules:
+  * UpgradeCode must NEVER change: it is how a newer MSI finds and replaces the installed one.
+  * Version is passed with `-d Version=X.Y.Z` (numeric core of the workspace Cargo.toml version).
+    Windows Installer ignores the 4th field when comparing, and does not accept "-beta.1".
+  * User data lives in %APPDATA% / %LOCALAPPDATA% (see pss-store paths), so upgrades and
+    uninstalls never touch it. No CA certificate is bundled: each user generates their own.
+-->
+
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="PSS-BattleStats"
+           Manufacturer="TounSec"
+           Version="$(var.Version)"
+           UpgradeCode="92CE907E-3DBF-4A20-86C6-0C3F7F3F382D"
+           Scope="perMachine">
+
+    <!-- Installing a newer version replaces the old one; older versions are refused. -->
+    <MajorUpgrade DowngradeErrorMessage="A newer version of PSS-BattleStats is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Icon Id="AppIcon" SourceFile="..\assets\pss_battlestats_icon.ico" />
+    <Property Id="ARPPRODUCTICON" Value="AppIcon" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="PSS-BattleStats">
+        <Component Id="MainExe" Guid="*">
+          <File Id="GuiExe" Source="..\target\dist\pss-battlestats.exe" KeyPath="yes">
+            <Shortcut Id="StartMenuShortcut"
+                      Directory="ProgramMenuFolder"
+                      Name="PSS-BattleStats"
+                      Icon="AppIcon"
+                      Advertise="yes" />
+          </File>
+        </Component>
+        <Component Id="License" Guid="*">
+          <File Id="LicenseFile" Source="..\LICENSE" />
+        </Component>
+      </Directory>
+    </StandardDirectory>
+
+    <Feature Id="Main" Title="PSS-BattleStats" Level="1">
+      <ComponentRef Id="MainExe" />
+      <ComponentRef Id="License" />
+    </Feature>
+  </Package>
+</Wix>
