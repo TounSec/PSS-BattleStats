@@ -27,13 +27,13 @@
     <MajorUpgrade DowngradeErrorMessage="A newer version of PSS-BattleStats is already installed." />
     <MediaTemplate EmbedCab="yes" />
 
-    <Icon Id="AppIcon" SourceFile="..\assets\pss_battlestats_icon.ico" />
+    <Icon Id="AppIcon" SourceFile="assets\pss_battlestats_icon.ico" />
     <Property Id="ARPPRODUCTICON" Value="AppIcon" />
 
     <StandardDirectory Id="ProgramFiles64Folder">
       <Directory Id="INSTALLFOLDER" Name="PSS-BattleStats">
         <Component Id="MainExe" Guid="*">
-          <File Id="GuiExe" Source="..\target\dist\pss-battlestats.exe" KeyPath="yes">
+          <File Id="GuiExe" Source="target\dist\pss-battlestats.exe" KeyPath="yes">
             <Shortcut Id="StartMenuShortcut"
                       Directory="ProgramMenuFolder"
                       Name="PSS-BattleStats"
@@ -42,7 +42,7 @@
           </File>
         </Component>
         <Component Id="License" Guid="*">
-          <File Id="LicenseFile" Source="..\LICENSE" />
+          <File Id="LicenseFile" Source="LICENSE" />
         </Component>
       </Directory>
     </StandardDirectory>
